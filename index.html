@@ -1,80 +1,117 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Furina Trust Challenge</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Furina — Trust Challenge</title>
+
+  <!-- Meta -->
+  <meta name="description" content="Furina AI Psychological Trust Game by Firdaus Hidayatullah">
+  <meta name="theme-color" content="#4c6fff">
 
   <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ================= WELCOME SCREEN ================= -->
+<!-- =================================================
+     WELCOME / INTRO SCREEN
+================================================= -->
 <div id="welcome" class="screen active">
   <div class="welcome-box">
-    <h1>Furina</h1>
-    <p class="subtitle">Dingin · Selektif · Menguji Kepercayaan</p>
+
+    <h1 class="title">Furina</h1>
+    <p class="subtitle">
+      Dingin · Selektif · Menguji Kepercayaan
+    </p>
 
     <input
       id="nameInput"
       type="text"
       placeholder="Masukkan namamu…"
       autocomplete="off"
-    >
+    />
 
     <button id="startBtn">Masuk</button>
 
     <p class="hint">
-      Tidak semua kata akan disukai.<br>
-      Skor 100 berarti kepercayaan.
+      Tidak semua kata akan diterima.<br>
+      Skor 100 bukan jaminan.
     </p>
+
+    <p class="credit">
+      by <b>Firdaus Hidayatullah</b>
+    </p>
+
   </div>
 </div>
 
-<!-- ================= MAIN APP ================= -->
+<!-- =================================================
+     MAIN APP
+================================================= -->
 <div id="app" class="screen">
 
   <!-- ===== HEADER ===== -->
   <header>
-    <div>
+    <div class="header-left">
       <h2 id="furinaName">Furina</h2>
-      <p class="subtitle">Dingin · Selektif</p>
+      <p class="subtitle small">Dingin · Selektif</p>
     </div>
-    <div class="info">
+
+    <div class="header-right">
       <span id="clock">00:00</span>
-      <span class="score">Score: <b id="score">0</b></span>
+      <span class="score">
+        Score: <b id="score">0</b>
+      </span>
     </div>
   </header>
 
-  <!-- ===== CHAT ===== -->
-  <main id="chat"></main>
+  <!-- ===== CHAT AREA ===== -->
+  <main id="chat">
+    <!-- Bubble chat akan muncul di sini -->
+  </main>
 
-  <!-- ===== INPUT ===== -->
+  <!-- ===== INPUT AREA ===== -->
   <footer>
     <input
       id="input"
+      type="text"
       placeholder="Ketik dengan tenang…"
       autocomplete="off"
       disabled
-    >
+    />
     <button id="send" disabled>Kirim</button>
   </footer>
 
 </div>
 
-<!-- ================= FLAG CELEBRATION ================= -->
+<!-- =================================================
+     CELEBRATION / ENDING
+================================================= -->
 <div id="celebration" class="hidden">
   <div class="celebrate-box">
     <h1>🎉 Selamat 🎉</h1>
-    <p>Kamu berhasil mendapatkan kepercayaan Furina</p>
+
+    <p>
+      Kamu berhasil mendapatkan<br>
+      kepercayaan Furina
+    </p>
+
     <div class="hearts">
       ❤️ 💙 💜 💖 💗
     </div>
+
+    <p class="credit small">
+      Furina AI Engine<br>
+      by <b>Firdaus Hidayatullah</b>
+    </p>
   </div>
 </div>
 
-<!-- JS -->
+<!-- =================================================
+     SCRIPT
+================================================= -->
 <script src="script.js"></script>
+
 </body>
 </html>
