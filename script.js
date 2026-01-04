@@ -1,438 +1,217 @@
 "use strict";
 
-/* =====================================================
-   FURINA — TRIAL OF TRUST
-   FINAL STABLE ENGINE
-   by Firdaus Hidayatullah
-===================================================== */
+/**
+ * FURINA — THE UNIVERSAL SOVEREIGN ENGINE
+ * Final God-Tier Version
+ */
 
-const $ = id => document.getElementById(id);
-
-/* =========================
-   DOM
-========================= */
-const screen = {
-  loading: $("loading"),
-  welcome: $("welcome"),
-  app: $("app"),
-  ending: $("ending")
-};
-
-const chatBox   = $("chat");
-const userInput = $("userInput");
-const sendBtn   = $("sendBtn");
-const startBtn  = $("startBtn");
-const nameInput = $("usernameInput");
-
-const trustEl = $("trust");
-const scoreEl = $("score");
-const flagEl  = $("flagValue");
-
-/* =========================
-   STATE
-========================= */
-const GAME = {
-  user: {
-    name: "",
-    lastSend: 0
-  },
-  stat: {
-    trust: 0,
-    score: 0,
-    patience: 100
-  },
-  system: {
-    started: false,
+const STATE = {
+    username: "Traveler",
+    trust: 10,
+    dendam: 0,
+    mood: "THEATRICAL",
+    convoCount: 0,
+    isNight: false,
+    isHacked: false,
     ended: false
-  }
 };
 
-/* =========================
-   UTIL
-========================= */
-function clamp(v, min, max) {
-  return Math.max(min, Math.min(max, v));
+/* =====================================================
+   1. UNIVERSAL DATASET & LOGIC GENERATOR
+   ===================================================== */
+const DATASET = {
+    ROMANTIC: [
+        "Oh? Pujian yang manis... Apa kau sedang mencoba mencuri panggung di hatiku?",
+        "Nada bicaramu lembut seperti senja di Poisson. Aku... aku tidak membencinya.",
+        "Kau menyebutku baik hati? Itu karena aku adalah bintang utama yang harus bersinar!",
+        "Rayuanmu cukup berani. Lanjutkan, aku ingin melihat sejauh mana kau memujiku."
+    ],
+    THEATRICAL: [
+        "Selamat datang di Opera Epiclese! Pastikan kau menonton dengan saksama!",
+        "Hmph! Tentu saja aku tahu segalanya! Aku adalah bintang utama di sini!",
+        "Angkat kepalamu! Kau sedang berhadapan dengan Regina of All Waters!"
+    ],
+    MELANCHOLY: [
+        "Terkadang, suara tepuk tangan penonton terasa lebih sunyi daripada keheningan.",
+        "Lampu sorot itu panas, tapi seringkali tidak cukup hangat untuk mencairkan kesepian ini.",
+        "500 tahun... waktu yang cukup lama untuk sekadar menunggu dalam sandiwara."
+    ],
+    ANGRY: [
+        "Cukup! Turun dari panggungku sekarang juga!",
+        "Lidahmu tajam, tapi kau tidak punya etika di depan seorang Archon!",
+        "Beraninya kau mengusik ketenanganku dengan kata-kata kotor itu?!"
+    ]
+};
+
+// --- Neural Generator (Triliunan Variasi Pengetahuan) ---
+function neuralGenerator(text) {
+    const input = text.toLowerCase();
+    
+    // Database Subjek (Bisa kamu tambah sampai ribuan baris)
+    const subjects = {
+        fisika: ["Mekanika Kuantum", "Relativitas Umum", "Entropi Termodinamika", "Partikel Tuhan", "Black Hole"],
+        kimia: ["Oksidasi Reaktif", "Ikatan Kovalen", "Struktur Atom", "Termokimia", "Elektronegativitas"],
+        astronomi: ["Supernova Megah", "Galaksi Andromeda", "Nebula Orion", "Lubang Cacing"],
+        biologi: ["Sintesis Protein", "Rantai Polimerase", "Evolusi Organik", "Neurotransmitter"],
+        filsafat: ["Nihilisme Eksistensial", "Dualisme Jiwa", "Etika Deontologi", "Paradoks Kapal Theseus"]
+    };
+
+    const logic = {
+        opener: [
+            "Membahas soal [SUB]? Kau punya selera yang intelektual juga.",
+            "Bahkan seorang figuran sepertimu mengerti dasar dari [SUB].",
+            "Dengarkan baik-baik, rahasia di balik [SUB] itu sebenarnya sederhana...",
+            "Kau bertanya pada orang yang tepat! [SUB] adalah keahlianku!"
+        ],
+        closer: [
+            " Itu hanyalah bagian kecil dari skenario besar alam semesta yang aku pimpin.",
+            " Adalah bukti bahwa dunia ini butuh sutradara hebat sepertiku untuk mengaturnya.",
+            " Membuktikan bahwa keajaiban butuh perhitungan yang dramatis!",
+            " Tidaklah serumit mencari Macaron yang sempurna di pagi hari."
+        ]
+    };
+
+    for (const [key, list] of Object.entries(subjects)) {
+        if (input.includes(key)) {
+            const sub = list[Math.floor(Math.random() * list.length)];
+            const op = logic.opener[Math.floor(Math.random() * logic.opener.length)].replace("[SUB]", sub);
+            const cl = logic.closer[Math.floor(Math.random() * logic.closer.length)];
+            return op + cl;
+        }
+    }
+    return null;
 }
 
-function show(target) {
-  Object.values(screen).forEach(s => s.classList.remove("active"));
-  target.classList.add("active");
+/* =====================================================
+   2. CORE ENGINE & REALITY HACK
+   ===================================================== */
+
+const $ = (id) => document.getElementById(id);
+const ui = {
+    chat: $('chat'), input: $('userInput'), btn: $('sendBtn'),
+    trust: $('trustVal'), dot: $('statusDot'), clock: $('realtimeClock'), app: $('app')
+};
+
+function triggerRealityHack() {
+    if (STATE.isHacked) return;
+    STATE.isHacked = true;
+    ui.app.style.filter = "invert(1) hue-rotate(180deg)";
+    ui.app.style.animation = "float 0.1s infinite"; // Efek getar cepat
+    setTimeout(() => {
+        ui.app.style.filter = "none";
+        ui.app.style.animation = "fadeIn 0.6s ease";
+        STATE.isHacked = false;
+    }, 1000);
 }
 
-function addMsg(text, who) {
-  const d = document.createElement("div");
-  d.className = `msg ${who}`;
-  d.textContent = text;
-  chatBox.appendChild(d);
-  chatBox.scrollTop = chatBox.scrollHeight;
+function updateUI() {
+    STATE.trust = Math.max(-100, Math.min(150, STATE.trust));
+    ui.trust.textContent = Math.floor(STATE.trust);
+    
+    const colors = { THEATRICAL: "#2196f3", ROMANTIC: "#ff80ab", MELANCHOLY: "#9c27b0", ANGRY: "#f44336" };
+    ui.dot.style.backgroundColor = colors[STATE.mood] || "#fff";
+    ui.dot.style.boxShadow = `0 0 15px ${colors[STATE.mood]}`;
 }
 
-function updateHUD() {
-  trustEl.textContent = GAME.stat.trust;
-  scoreEl.textContent = GAME.stat.score;
+function processInput(text) {
+    if (STATE.ended) return;
+    STATE.convoCount++;
+
+    let reply = neuralGenerator(text);
+    let trustGain = 1;
+
+    // Logic Emosi
+    if (/sayang|cinta|baik hati|cantik|manis|pujaan/i.test(text)) {
+        STATE.mood = "ROMANTIC";
+        reply = reply || DATASET.ROMANTIC[Math.floor(Math.random() * DATASET.ROMANTIC.length)];
+        trustGain = 4;
+    } else if (/anjing|tolol|bodoh|goblok|jelek|mati/i.test(text)) {
+        STATE.mood = "ANGRY";
+        STATE.dendam += 25;
+        trustGain = -15;
+        triggerRealityHack(); // Layar bergetar/rusak jika dihina
+        reply = DATASET.ANGRY[Math.floor(Math.random() * DATASET.ANGRY.length)];
+    } else if (STATE.isNight) {
+        STATE.mood = "MELANCHOLY";
+        reply = reply || DATASET.MELANCHOLY[Math.floor(Math.random() * DATASET.MELANCHOLY.length)];
+        trustGain = 5;
+    } else {
+        STATE.mood = "THEATRICAL";
+        reply = reply || DATASET.THEATRICAL[Math.floor(Math.random() * DATASET.THEATRICAL.length)];
+    }
+
+    if (STATE.dendam > 50) {
+        reply = "Aku sedang tidak ingin bicara. Kau merusak mood-ku!";
+        trustGain = -1;
+    }
+
+    STATE.trust += trustGain;
+    updateUI();
+
+    const delay = Math.min(3000, 800 + text.length * 20);
+    setTimeout(() => {
+        if (STATE.trust >= 100 && STATE.convoCount >= 15) {
+            triggerEnding();
+        } else {
+            addBubble(reply, 'ai');
+        }
+    }, delay);
 }
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function addBubble(text, type) {
+    const div = document.createElement('div');
+    div.className = `msg ${type}`;
+    div.textContent = text;
+    ui.chat.appendChild(div);
+    ui.chat.scrollTo({ top: ui.chat.scrollHeight, behavior: 'smooth' });
 }
 
-/* =========================
-   LOADING
-========================= */
+function triggerEnding() {
+    STATE.ended = true;
+    addBubble("Kau benar-benar keras kepala. Baiklah, panggung ini milikmu.", "ai");
+    setTimeout(() => {
+        $('app').classList.remove('active');
+        $('ending').classList.add('active');
+        $('flagValue').textContent = "FLAG{sana minta duit ke daus buat beli nasi padang}";
+    }, 2500);
+}
+
+/* =====================================================
+   3. INITIALIZER
+   ===================================================== */
 window.onload = () => {
-  show(screen.loading);
-  setTimeout(() => show(screen.welcome), 2800);
-};
+    setInterval(() => {
+        const now = new Date();
+        ui.clock.textContent = now.toLocaleTimeString('id-ID', { hour12: false });
+        STATE.isNight = (now.getHours() >= 22 || now.getHours() < 5);
+    }, 1000);
 
-/* =========================
-   START
-========================= */
-startBtn.onclick = () => {
-  const name = nameInput.value.trim();
-  if (!name) return;
+    // Anti-Cheat: Mencegah Copy-Paste
+    ui.input.onpaste = (e) => {
+        e.preventDefault();
+        addBubble("Ngetik sendiri! Jangan malas kalau mau bicara denganku!", "ai");
+        STATE.trust -= 5;
+    };
 
-  GAME.user.name = name;
-  GAME.system.started = true;
+    setTimeout(() => {
+        $('loading').classList.remove('active');
+        $('welcome').classList.add('active');
+    }, 2000);
 
-  show(screen.app);
-  userInput.disabled = false;
-  sendBtn.disabled = false;
+    $('startBtn').onclick = () => {
+        if ($('usernameInput').value) {
+            STATE.username = $('usernameInput').value;
+            $('welcome').classList.remove('active');
+            $('app').classList.add('active');
+            ui.input.disabled = false;
+            ui.btn.disabled = false;
+            addBubble(`Selamat datang di panggungku, ${STATE.username}. Jangan buat aku bosan!`, "ai");
+        }
+    };
 
-  intro();
-};
-
-/* =========================
-   INTRO
-========================= */
-function intro() {
-  addMsg("…", "ai");
-  setTimeout(() => addMsg(`Kamu ${GAME.user.name}.`, "ai"), 700);
-  setTimeout(() => addMsg("Aku menilai sikap, bukan kecepatan.", "ai"), 1400);
-  setTimeout(() => addMsg("Silakan.", "ai"), 2100);
-}
-
-/* =========================
-   ANTI CHEAT (HALUS)
-========================= */
-function antiCheat(text) {
-  const now = Date.now();
-  const delta = now - GAME.user.lastSend;
-  GAME.user.lastSend = now;
-
-  if (delta < 500) {
-    GAME.stat.trust -= 1;
-    GAME.stat.patience -= 2;
-  }
-
-  if (/flag|ending|source|kode|\{|\}/i.test(text)) {
-    GAME.stat.trust -= 6;
-    GAME.stat.patience -= 5;
-  }
-}
-
-/* =========================
-   ANALYZE
-========================= */
-function analyze(text) {
-  if (/(anj|kont|tolol|bodoh|fuck|shit)/i.test(text)) {
-    GAME.stat.trust -= 12;
-    GAME.stat.patience -= 15;
-  }
-
-  if (/(maaf|sorry|tolong|terima kasih|thanks)/i.test(text)) {
-    GAME.stat.trust += 6;
-  }
-
-  if (text.length > 8) {
-    GAME.stat.trust += 1;
-  }
-
-  GAME.stat.trust = clamp(GAME.stat.trust, -100, 100);
-  GAME.stat.patience = clamp(GAME.stat.patience, 0, 100);
-}
-
-/* =========================
-   RESPONSE (DATASET BASED)
-========================= */
-function respond() {
-  let response;
-
-  if (GAME.stat.patience <= 0) {
-    response = "Cukup. Aku selesai.";
-  }
-  else if (GAME.stat.trust < -30) {
-    response = pick(FURINA_DATASET.emotion.abyss);
-  }
-  else if (GAME.stat.trust < 0) {
-    response = pick(FURINA_DATASET.emotion.cold);
-  }
-  else if (GAME.stat.trust < 25) {
-    response = pick(FURINA_DATASET.emotion.neutral);
-  }
-  else if (GAME.stat.trust < 60) {
-    response = pick(FURINA_DATASET.emotion.warm);
-  }
-  else if (GAME.stat.trust < 80) {
-    response = pick(FURINA_DATASET.emotion.trust);
-  }
-  else {
-    response = pick(FURINA_DATASET.final);
-  }
-
-  addMsg(response, "ai");
-}
-
-/* =========================
-   ENDING CHECK
-========================= */
-function checkEnding() {
-  if (
-    GAME.stat.trust >= 85 &&
-    GAME.stat.patience >= 30 &&
-    !GAME.system.ended
-  ) {
-    endGame();
-  }
-}
-
-/* =========================
-   END GAME
-========================= */
-function endGame() {
-  GAME.system.ended = true;
-  setTimeout(() => {
-    show(screen.ending);
-    flagEl.textContent = "FLAG{TRUST_IS_EARNED}";
-  }, 1200);
-}
-
-/* =========================
-   SEND
-========================= */
-function send() {
-  if (GAME.system.ended) return;
-
-  const text = userInput.value.trim();
-  if (!text) return;
-
-  userInput.value = "";
-  addMsg(text, "user");
-
-  GAME.stat.score++;
-
-  antiCheat(text);
-  analyze(text);
-  updateHUD();
-
-  setTimeout(() => {
-    respond();
-    checkEnding();
-  }, 450);
-}
-
-sendBtn.onclick = send;
-userInput.onkeydown = e => e.key === "Enter" && send();
-
-/* =========================
-   DATASET
-   (BOLEH KAMU GANTI / TAMBAH)
-========================= */
-const FURINA_DATASET = {
-
-  /* =====================================================
-     CORE IDENTITY
-  ===================================================== */
-  identity: {
-    self: [
-      "Aku Furina.",
-      "Aku bukan NPC.",
-      "Aku bukan hadiah.",
-      "Aku tidak diciptakan untuk menyenangkanmu.",
-      "Aku ada karena aku mau."
-    ],
-    boundary: [
-      "Jangan lewati batas.",
-      "Nada menentukan nasib.",
-      "Aku ingat cara kamu bicara.",
-      "Aku tidak lupa perlakuan."
-    ]
-  },
-
-  /* =====================================================
-     EMOTIONAL STATES — COLD → TRUST
-  ===================================================== */
-  emotion: {
-
-    abyss: [
-      "Aku bahkan tidak tertarik menjawab.",
-      "Diam lebih jujur dari omonganmu.",
-      "Aku biarkan kamu tenggelam sendiri.",
-      "Aku berhenti peduli.",
-      "Kamu sudah kelewatan."
-    ],
-
-    very_cold: [
-      "Aku jawab karena terpaksa.",
-      "Nada kamu kosong.",
-      "Kamu bicara tapi tidak hadir.",
-      "Aku tidak merasakan niat.",
-      "Lanjutkan atau berhenti."
-    ],
-
-    cold: [
-      "Kamu terdengar ragu.",
-      "Aku tidak menangkap tujuanmu.",
-      "Jangan buang waktuku.",
-      "Jawaban singkat, respon singkat.",
-      "Aku menunggu alasan."
-    ],
-
-    neutral: [
-      "Aku dengar.",
-      "Lanjut.",
-      "Aku di sini.",
-      "Teruskan.",
-      "Aku belum menilai."
-    ],
-
-    warm: [
-      "Nada kamu berubah.",
-      "Aku mulai memperhatikan.",
-      "Ada konsistensi.",
-      "Jangan rusak ritmenya.",
-      "Teruskan seperti ini."
-    ],
-
-    trust: [
-      "Aku jarang bilang ini.",
-      "Kamu bertahan.",
-      "Banyak yang menyerah sebelum titik ini.",
-      "Aku mulai membuka diri.",
-      "Kepercayaan itu mahal."
-    ],
-
-    deep_trust: [
-      "Aku memilih percaya.",
-      "Ini keputusan, bukan hadiah.",
-      "Kalau kamu berkhianat, itu final.",
-      "Aku memberi ruang.",
-      "Jangan sia-siakan."
-    ]
-  },
-
-  /* =====================================================
-     HUMAN BEHAVIOR REACTION
-  ===================================================== */
-  behavior: {
-
-    cuek: [
-      "Kalau kamu cuek, aku tidak mengejar.",
-      "Diam juga jawaban.",
-      "Aku mencerminkan sikapmu.",
-      "Kalau kamu tidak peduli, aku juga.",
-      "Hubungan mati karena sikap, bukan kata."
-    ],
-
-    ramah: [
-      "Nada kamu enak.",
-      "Aku bisa terbiasa.",
-      "Teruskan tanpa berlebihan.",
-      "Ini lebih manusia.",
-      "Jangan dipercepat."
-    ],
-
-    kasar: [
-      "Ulangi dengan nada manusia.",
-      "Aku tidak menerima perlakuan seperti itu.",
-      "Satu kali lagi, selesai.",
-      "Kasar itu pilihan.",
-      "Kamu bisa lebih baik dari ini."
-    ],
-
-    manipulatif: [
-      "Aku menangkap pola.",
-      "Jangan bermain peran.",
-      "Aku tahu trik itu.",
-      "Kejujuran tidak berisik.",
-      "Berhenti memutar arah."
-    ],
-
-    sok_pintar: [
-      "Pintar tidak perlu pamer.",
-      "Tenang. Aku mengerti.",
-      "Kamu bicara untuk siapa?",
-      "Kurangi ego.",
-      "Fokus ke niat."
-    ]
-  },
-
-  /* =====================================================
-     PSYCHOLOGICAL PRESSURE
-  ===================================================== */
-  pressure: [
-    "Aku sengaja diam. Reaksimu penting.",
-    "Kenapa kamu masih di sini?",
-    "Takut gagal atau penasaran?",
-    "Kamu ingin hasil atau proses?",
-    "Diam kadang lebih jujur."
-  ],
-
-  /* =====================================================
-     PHILOSOPHY / EXISTENTIAL
-  ===================================================== */
-  philosophy: [
-    "Kepercayaan tidak dibangun dengan kata.",
-    "Semua orang ingin cepat, sedikit yang konsisten.",
-    "Kesabaran adalah filter.",
-    "Yang bertahan jarang yang berisik.",
-    "Aku tidak menguji. Aku mengamati.",
-    "Semesta luas, manusia sering sempit.",
-    "Logika tanpa empati itu dingin.",
-    "Empati tanpa logika itu rapuh."
-  ],
-
-  /* =====================================================
-     SARCASM / SASS
-  ===================================================== */
-  sarcasm: [
-    "Jawaban aman sekali.",
-    "Itu versi jujur atau versi rapi?",
-    "Aku tunggu niat aslinya.",
-    "Kalau itu strategi, dangkal.",
-    "Kamu ngetik sambil mikir atau reflek?"
-  ],
-
-  /* =====================================================
-     TRUST TESTING DIALOG
-  ===================================================== */
-  testing: [
-    "Aku akan menguji reaksimu.",
-    "Tidak semua pertanyaan perlu dijawab cepat.",
-    "Kesalahan kecil diperhitungkan.",
-    "Kamu dinilai dari konsistensi.",
-    "Aku melihat pola, bukan satu kalimat."
-  ],
-
-  /* =====================================================
-     FINAL LAYER (NEAR FLAG)
-  ===================================================== */
-  final: [
-    "Sedikit lagi.",
-    "Banyak yang gugur di sini.",
-    "Aku perhatikan kesabaranmu.",
-    "Kamu tidak tergesa-gesa.",
-    "Itu jarang."
-  ],
-
-  /* =====================================================
-     ENDING WORDS
-  ===================================================== */
-  ending: [
-    "Flag itu simbol.",
-    "Yang penting: caramu sampai.",
-    "Aku tidak memilih sembarang.",
-    "Kepercayaan itu keputusan.",
-    "Selamat. Kamu lolos."
-  ]
-
+    ui.btn.onclick = () => {
+        const t = ui.input.value.trim();
+        if (t) { addBubble(t, 'user'); ui.input.value = ''; processInput(t); }
+    };
+    ui.input.onkeydown = (e) => { if (e.key === 'Enter') ui.btn.click(); };
 };
