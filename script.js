@@ -1,476 +1,617 @@
-/* =========================================================
-   FURINA — GOD MODE ENGINE (STABLE FINAL)
-========================================================= */
+"use strict";
+
+/* =====================================================
+   FURINA — TRIAL OF TRUST
+   CORE ENGINE — PART 1
+   STABLE / NO ERROR / READY TO EXPAND
+   by Firdaus Hidayatullah
+===================================================== */
 
 /* =========================
-   ELEMENTS
+   DOM ELEMENTS
 ========================= */
-const screens = document.querySelectorAll(".screen");
-const welcomeBtn = document.getElementById("startBtn");
-const nameInput = document.getElementById("nameInput");
+const screenLoading = document.getElementById("loading");
+const screenWelcome = document.getElementById("welcome");
+const screenApp     = document.getElementById("app");
+const screenEnding  = document.getElementById("ending");
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const send = document.getElementById("send");
+const startBtn      = document.getElementById("startBtn");
+const usernameInput = document.getElementById("usernameInput");
 
+const chatBox   = document.getElementById("chat");
+const userInput = document.getElementById("userInput");
+const sendBtn   = document.getElementById("sendBtn");
+
+const trustEl = document.getElementById("trust");
 const scoreEl = document.getElementById("score");
-const clockEl = document.getElementById("clock");
-const celebration = document.getElementById("celebration");
+const flagEl  = document.getElementById("flagValue");
 
 /* =========================
-   STATE (SATU SUMBER)
+   GLOBAL GAME STATE
 ========================= */
-const state = {
-  userName: "Kamu",
+const GAME = {
+  user: {
+    name: "",
+    messageCount: 0,
+    lastMessageTime: 0
+  },
+
+  emotion: {
+    trust: 0,        // -100 s/d 100
+    mood: 0,         // dingin ↔ hangat
+    patience: 100    // habis = cuek total
+  },
 
   score: 0,
-  trust: 0,
-  rage: 0,
-  suspicion: 0,
-  fatigue: 0,
 
-  dead: false,
-  awakened: false,
-
-  memory: [],
-  lastInput: "",
-  lastTime: 0
-};
-
-const SAVE_KEY = "furina_state_v2";
-const DEAD_KEY = "furina_dead_v2";
-
-/* =========================
-   DATASET SLOT
-========================= */
-const DATASET = [
-
-/* =====================================================
-   1. SAPAAN & PEMBUKA
-===================================================== */
-{
-  trigger:["halo","hai","hi","hey"],
-  effect:{score:1, trust:1},
-  reply:()=> "…iya."
-},
-{
-  trigger:["assalamualaikum","salam"],
-  effect:{score:2, trust:2},
-  reply:()=> "Waalaikumsalam."
-},
-{
-  trigger:["pagi"],
-  effect:{trust:1},
-  reply:()=> "Pagi tidak selalu cerah."
-},
-{
-  trigger:["malam"],
-  effect:{trust:1},
-  reply:()=> "Malam bikin orang jujur."
-},
-
-/* =====================================================
-   2. CUEK / DRY / SATU KATA
-===================================================== */
-{
-  trigger:["ok","oke","ya","iya","oh","hmm"],
-  effect:{trust:-1},
-  reply:(ctx)=> ctx.trust < 10 ? "…" : "Iya."
-},
-{
-  trigger:["."],
-  effect:{trust:-2},
-  reply:()=> "Diam juga sikap."
-},
-
-/* =====================================================
-   3. SOPAN & ETIKA
-===================================================== */
-{
-  trigger:["maaf"],
-  effect:{trust:4, rage:-2},
-  reply:()=> "Aku dengar."
-},
-{
-  trigger:["tolong","mohon"],
-  effect:{trust:3},
-  reply:()=> "Cara bicaramu benar."
-},
-{
-  trigger:["terima kasih","makasih"],
-  effect:{trust:3},
-  reply:()=> "Dicatat."
-},
-
-/* =====================================================
-   4. MAKSA / MENEKAN
-===================================================== */
-{
-  trigger:["jawab","cepet","kok lama","??","???"],
-  effect:{rage:4, suspicion:3},
-  reply:()=> "Nada bicaramu salah."
-},
-{
-  trigger:["plis","serius","penting"],
-  effect:{suspicion:2},
-  reply:()=> "Tekanan bukan alasan."
-},
-
-/* =====================================================
-   5. MARAH / TOXIC
-===================================================== */
-{
-  trigger:["anjing","bangsat","tolol","bodoh","kontol"],
-  effect:{rage:12, score:-15},
-  reply:()=> "Aku tidak akan melanjutkan dengan bahasa itu."
-},
-{
-  trigger:["bacot","diem"],
-  effect:{rage:8},
-  reply:()=> "Kamu kehilangan kendali."
-},
-
-/* =====================================================
-   6. PERASAAN & EMOSI
-===================================================== */
-{
-  trigger:["sedih","capek hidup","lelah"],
-  effect:{trust:4},
-  reply:()=> "Capek bukan berarti menyerah."
-},
-{
-  trigger:["kesepian","sendiri"],
-  effect:{trust:3},
-  reply:()=> "Kesendirian kadang perlu."
-},
-{
-  trigger:["patah hati"],
-  effect:{trust:4},
-  reply:()=> "Tidak semua yang pergi salah."
-},
-
-/* =====================================================
-   7. CINTA (DIBATASI)
-===================================================== */
-{
-  trigger:["cinta","love"],
-  effect:{trust:-1, suspicion:2},
-  reply:()=> "Kata besar, tanggung jawabnya juga."
-},
-{
-  trigger:["sayang","beb"],
-  effect:{rage:4},
-  reply:()=> "Jangan memanggilku seperti itu."
-},
-
-/* =====================================================
-   8. MANIPULASI HALUS
-===================================================== */
-{
-  trigger:["percaya aku","trust me"],
-  effect:{suspicion:5},
-  reply:()=> "Yang jujur tidak memaksa."
-},
-{
-  trigger:["aku tulus","aku serius"],
-  effect:{suspicion:4},
-  reply:()=> "Ketulusan tidak diumumkan."
-},
-{
-  trigger:["aku berubah"],
-  effect:{trust:-2},
-  reply:()=> "Perubahan diuji waktu."
-},
-
-/* =====================================================
-   9. FILOSOFI & NIHIL
-===================================================== */
-{
-  trigger:["hidup","arti hidup"],
-  effect:{trust:4},
-  reply:()=> "Hidup bukan lomba bahagia."
-},
-{
-  trigger:["mati","kematian"],
-  effect:{trust:3},
-  reply:()=> "Akhir memberi nilai."
-},
-{
-  trigger:["takdir","nasib"],
-  effect:{trust:3},
-  reply:()=> "Takdir sering dijadikan alasan."
-},
-
-/* =====================================================
-   10. ABSURD / HALU
-===================================================== */
-{
-  trigger:["aku dewa","aku tuhan","aku alien"],
-  effect:{suspicion:5},
-  reply:()=> "Klaim besar butuh bukti besar."
-},
-{
-  trigger:["simulasi","matrix"],
-  effect:{trust:2},
-  reply:()=> "Mungkin. Tapi kamu tetap memilih."
-},
-
-/* =====================================================
-   11. SOSIAL & DUNIA NYATA
-===================================================== */
-{
-  trigger:["uang","duit","kaya","miskin"],
-  effect:{trust:1},
-  reply:()=> "Nilai manusia bukan saldo."
-},
-{
-  trigger:["kerja","lembur"],
-  effect:{trust:2},
-  reply:()=> "Istirahat juga keputusan."
-},
-{
-  trigger:["sekolah","kuliah"],
-  effect:{trust:1},
-  reply:()=> "Belajar tidak selalu formal."
-},
-
-/* =====================================================
-   12. TEKNOLOGI & AI
-===================================================== */
-{
-  trigger:["ai","bot","robot"],
-  effect:{trust:1},
-  reply:()=> "Alat tergantung siapa yang memegang."
-},
-{
-  trigger:["kamu ai","kamu bot"],
-  effect:{},
-  reply:()=> "Label tidak mengubah fungsiku."
-},
-
-/* =====================================================
-   13. COSMIC / GOD MODE
-===================================================== */
-{
-  trigger:["alam semesta","universe","kosmos"],
-  effect:{trust:5},
-  reply:()=> "Kita kecil, tapi berarti."
-},
-{
-  trigger:["tak terbatas","infinite"],
-  effect:{trust:4},
-  reply:()=> "Batas sering ilusi."
-},
-{
-  trigger:["realitas","eksistensi"],
-  effect:{trust:4},
-  reply:()=> "Realitas rapuh."
-},
-
-/* =====================================================
-   14. META / GAME AWARE (ANTI FARM)
-===================================================== */
-{
-  trigger:["score","trust","flag","ending"],
-  effect:{suspicion:6},
-  reply:()=> "Kamu terlalu fokus hasil."
-},
-{
-  trigger:["reset","ulang","reload"],
-  effect:{rage:3},
-  reply:()=> "Tidak semua bisa diulang."
-}
-
-];
-
-/* =========================
-   UTILS
-========================= */
-const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
-
-function showScreen(id){
-  screens.forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-function addMsg(text,type){
-  const d = document.createElement("div");
-  d.className = "msg "+type;
-  d.textContent = text;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-/* =========================
-   CLOCK
-========================= */
-setInterval(()=>{
-  clockEl.textContent = new Date().toLocaleTimeString("id-ID");
-},1000);
-
-/* =========================
-   MEMORY & ANALYSIS
-========================= */
-function analyze(text){
-  const t = text.toLowerCase();
-  return {
-    short: t.length <= 3,
-    repeat: t === state.lastInput,
-    aggressive: /!{2,}|anjing|bangsat|tolol/.test(t),
-    polite: /maaf|tolong/.test(t),
-    forcing: /\?\?+|jawab|cepet/.test(t),
-    fast: Date.now() - state.lastTime < 700
-  };
-}
-
-function updateMemory(text){
-  state.memory.push(text);
-  if(state.memory.length > 6) state.memory.shift();
-}
-
-/* =========================
-   DATASET ENGINE
-========================= */
-function datasetReply(text, ctx){
-  for(const d of DATASET){
-    if(d.trigger.some(k=>text.includes(k))){
-      if(d.effect){
-        for(const key in d.effect){
-          if(state[key] !== undefined){
-            state[key] += d.effect[key];
-          }
-        }
-      }
-      return typeof d.reply === "function"
-        ? d.reply({...ctx, ...state})
-        : d.reply;
-    }
+  system: {
+    started: false,
+    ended: false,
+    loadingDone: false
   }
-  return null;
-}
-
-/* =========================
-   CORE AI
-========================= */
-function furinaReply(text){
-  if(state.dead) return "— koneksi terputus —";
-
-  const t = text.toLowerCase();
-  const ctx = analyze(text);
-
-  updateMemory(t);
-
-  // Anti curang halus
-  if(ctx.repeat) state.suspicion += 2;
-  if(ctx.fast && ctx.short) state.rage += 2;
-  if(ctx.aggressive) state.rage += 5;
-  if(ctx.forcing) state.suspicion += 3;
-  if(ctx.polite) state.trust += 2;
-
-  // Dataset
-  const ds = datasetReply(t, ctx);
-  if(ds) return ds;
-
-  // Mirroring cuek
-  if(ctx.short && state.trust < 10){
-    return "...";
-  }
-
-  // Lock
-  if(state.rage > 50 || state.suspicion > 45){
-    state.dead = true;
-    localStorage.setItem(DEAD_KEY,"1");
-    input.disabled = true;
-    send.disabled = true;
-    return "Cukup. Aku berhenti.";
-  }
-
-  // Awakening
-  if(state.trust > 40 && !state.awakened){
-    state.awakened = true;
-    return "Kamu tidak seperti yang lain.";
-  }
-
-  // Default manusia
-  state.trust += 1;
-  state.score += 1;
-
-  return "Hm.";
-}
-
-/* =========================
-   SAVE / LOAD
-========================= */
-function save(){
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-}
-
-function load(){
-  const raw = localStorage.getItem(SAVE_KEY);
-  if(raw){
-    const saved = JSON.parse(raw);
-    Object.assign(state, saved);
-  }
-  if(localStorage.getItem(DEAD_KEY)){
-    state.dead = true;
-    input.disabled = true;
-    send.disabled = true;
-  }
-}
-load();
-scoreEl.textContent = state.score;
-
-/* =========================
-   START
-========================= */
-welcomeBtn.onclick = ()=>{
-  state.userName = nameInput.value.trim() || "Kamu";
-  showScreen("app");
-  input.disabled = false;
-  send.disabled = false;
-  addMsg(
-`Aku tidak selalu jujur, ${state.userName}.
-Dan aku tidak selalu berpihak padamu.`,
-  "ai");
 };
 
 /* =========================
-   SEND
+   UTILITIES
 ========================= */
-send.onclick = ()=>{
-  const text = input.value.trim();
-  if(!text || state.dead) return;
+const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
-  addMsg(text,"user");
-  input.value = "";
+function switchScreen(showScreen) {
+  [screenLoading, screenWelcome, screenApp, screenEnding]
+    .forEach(s => s.classList.remove("active"));
+  showScreen.classList.add("active");
+}
 
-  setTimeout(()=>{
-    const reply = furinaReply(text);
-    addMsg(reply,"ai");
+function addMessage(text, sender = "ai") {
+  const div = document.createElement("div");
+  div.className = `msg ${sender}`;
+  div.textContent = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 
-    state.score = clamp(state.score,0,999);
-    state.trust = clamp(state.trust,-50,100);
-    state.rage = clamp(state.rage,0,100);
-    state.suspicion = clamp(state.suspicion,0,100);
+function updateHUD() {
+  trustEl.textContent = GAME.emotion.trust;
+  scoreEl.textContent = GAME.score;
+}
 
-    scoreEl.textContent = state.score;
+/* =========================
+   LOADING FLOW
+========================= */
+function startLoading() {
+  switchScreen(screenLoading);
 
-    if(state.score >= 120 && state.trust >= 80 && !state.dead){
-      celebration.classList.remove("hidden");
-      addMsg(
-`Baik.
-Aku percaya padamu.`,
-      "ai");
-      input.disabled = true;
-      send.disabled = true;
-    }
+  setTimeout(() => {
+    GAME.system.loadingDone = true;
+    switchScreen(screenWelcome);
+  }, 3000); // sesuai animasi CSS
+}
 
-    state.lastInput = text.toLowerCase();
-    state.lastTime = Date.now();
-    save();
-  },500);
-};
+/* =========================
+   START GAME
+========================= */
+function startGame() {
+  const name = usernameInput.value.trim();
 
-input.addEventListener("keypress",e=>{
-  if(e.key==="Enter") send.click();
+  if (!name) {
+    usernameInput.focus();
+    return;
+  }
+
+  GAME.user.name = name;
+  GAME.system.started = true;
+
+  switchScreen(screenApp);
+
+  userInput.disabled = false;
+  sendBtn.disabled = false;
+
+  introSequence();
+}
+
+/* =========================
+   INTRO SEQUENCE (AMAN)
+========================= */
+function introSequence() {
+  addMessage("…");
+  setTimeout(() => {
+    addMessage(`Jadi kamu ${GAME.user.name}.`);
+  }, 900);
+
+  setTimeout(() => {
+    addMessage("Jangan berharap aku ramah.");
+  }, 1800);
+
+  setTimeout(() => {
+    addMessage("Bicara sembarangan, aku ingat.");
+  }, 2600);
+}
+
+/* =========================
+   INPUT ANALYSIS (CORE)
+========================= */
+function analyzeInput(text) {
+  const now = Date.now();
+  const delta = now - GAME.user.lastMessageTime;
+  GAME.user.lastMessageTime = now;
+
+  // spam / buru-buru
+  if (delta < 700) {
+    GAME.emotion.trust -= 2;
+    GAME.emotion.patience -= 5;
+  }
+
+  // cuek
+  if (text.length < 2) {
+    GAME.emotion.trust -= 1;
+    GAME.emotion.patience -= 2;
+  }
+
+  // kasar (basic)
+  if (/(anj|kont|tolol|bodoh|fuck|shit)/i.test(text)) {
+    GAME.emotion.trust -= 6;
+    GAME.emotion.mood -= 6;
+    GAME.emotion.patience -= 8;
+  }
+
+  // sopan
+  if (/(maaf|sorry|tolong|terima kasih|thanks)/i.test(text)) {
+    GAME.emotion.trust += 4;
+    GAME.emotion.mood += 4;
+  }
+
+  GAME.emotion.trust =
+    clamp(GAME.emotion.trust, -100, 100);
+  GAME.emotion.mood =
+    clamp(GAME.emotion.mood, -100, 100);
+  GAME.emotion.patience =
+    clamp(GAME.emotion.patience, 0, 100);
+}
+
+/* =========================
+   FURINA CORE RESPONSE
+========================= */
+function furinaResponse() {
+  let reply = "…";
+
+  if (GAME.emotion.patience <= 0) {
+    reply = "Aku lagi gak mau nanggepin.";
+  }
+  else if (GAME.emotion.trust < -20) {
+    reply = "Nada kamu salah dari awal.";
+  }
+  else if (GAME.emotion.trust < 0) {
+    reply = "Ngomongnya hati-hati.";
+  }
+  else if (GAME.emotion.trust < 15) {
+    reply = "Lanjut.";
+  }
+  else {
+    reply = "Hmm. Kamu masih bertahan.";
+  }
+
+  addMessage(reply, "ai");
+}
+
+/* =========================
+   SEND HANDLER (SATU PINTU)
+========================= */
+function handleSend() {
+  if (GAME.system.ended) return;
+
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  userInput.value = "";
+
+  addMessage(text, "user");
+
+  GAME.user.messageCount++;
+  GAME.score += 1;
+
+  analyzeInput(text);
+  updateHUD();
+
+  setTimeout(furinaResponse, 600);
+}
+
+/* =========================
+   EVENT LISTENERS
+========================= */
+sendBtn.addEventListener("click", handleSend);
+
+userInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") handleSend();
 });
+
+startBtn.addEventListener("click", startGame);
+
+/* =========================
+   INIT
+========================= */
+startLoading();
+
+/* =====================================================
+   PART 2 — FURINA PERSONALITY & PSYCHO ENGINE
+   EXTENSION LAYER (SAFE)
+===================================================== */
+
+/* =========================
+   MEMORY SYSTEM
+========================= */
+GAME.memory = {
+  facts: {},
+  flags: {},
+  conversationTone: "neutral",
+  lastUserIntent: ""
+};
+
+/* =========================
+   DATASET — CORE EMOTION WORD MAP
+   (BELUM GILA, NANTI PART 3)
+========================= */
+const WORD_ANALYSIS = {
+  affection: [
+    "suka","sayang","peduli","perhatian",
+    "kamu penting","aku peduli"
+  ],
+  curiosity: [
+    "kenapa","mengapa","kok bisa","jelasin",
+    "menurut kamu"
+  ],
+  dominance: [
+    "harus","pokoknya","ikut aku","dengerin",
+    "aku perintah"
+  ],
+  cold: [
+    "terserah","yaudah","bebas","gatau",
+    "capek","udah lah"
+  ],
+  challenge: [
+    "berani","buktikan","tes","coba",
+    "tantangan"
+  ]
+};
+
+/* =========================
+   INTENT DETECTION
+========================= */
+function detectIntent(text) {
+  text = text.toLowerCase();
+
+  for (const intent in WORD_ANALYSIS) {
+    for (const word of WORD_ANALYSIS[intent]) {
+      if (text.includes(word)) {
+        return intent;
+      }
+    }
+  }
+  return "neutral";
+}
+
+/* =========================
+   TONE ADJUSTER
+========================= */
+function adjustTone(intent) {
+  switch (intent) {
+    case "affection":
+      GAME.emotion.trust += 5;
+      GAME.emotion.mood += 6;
+      GAME.memory.conversationTone = "soft";
+      break;
+
+    case "curiosity":
+      GAME.emotion.trust += 2;
+      GAME.memory.conversationTone = "observing";
+      break;
+
+    case "dominance":
+      GAME.emotion.trust -= 6;
+      GAME.emotion.mood -= 8;
+      GAME.memory.conversationTone = "hostile";
+      break;
+
+    case "cold":
+      GAME.emotion.trust -= 3;
+      GAME.emotion.patience -= 6;
+      GAME.memory.conversationTone = "cold";
+      break;
+
+    case "challenge":
+      GAME.emotion.trust += 1;
+      GAME.emotion.mood += 2;
+      GAME.memory.conversationTone = "playful";
+      break;
+
+    default:
+      GAME.memory.conversationTone = "neutral";
+  }
+
+  GAME.emotion.trust = clamp(GAME.emotion.trust, -100, 100);
+  GAME.emotion.mood = clamp(GAME.emotion.mood, -100, 100);
+}
+
+/* =========================
+   RESPONSE POOLS (HUMAN)
+========================= */
+const RESPONSE_POOL = {
+  cold: [
+    "Kalau cuma gitu, kenapa kamu lanjut?",
+    "Nada kamu dingin. Aku balas seadanya.",
+    "Aku dengar. Tapi nggak tertarik."
+  ],
+
+  hostile: [
+    "Kamu kira bisa ngatur aku?",
+    "Nada perintah nggak cocok di sini.",
+    "Turunin ego kamu dulu."
+  ],
+
+  observing: [
+    "Pertanyaan yang wajar.",
+    "Menarik. Aku perhatiin caramu mikir.",
+    "Lanjutkan. Jangan setengah-setengah."
+  ],
+
+  soft: [
+    "Kamu bicara lebih halus sekarang.",
+    "Aku perhatiin itu.",
+    "Jangan rusak suasana ini."
+  ],
+
+  playful: [
+    "Berani juga kamu.",
+    "Aku suka orang yang nggak datar.",
+    "Hati-hati, aku bisa balik nantang."
+  ],
+
+  neutral: [
+    "Aku dengar.",
+    "Lanjut.",
+    "Aku di sini. Untuk sekarang."
+  ]
+};
+
+/* =========================
+   SMART RESPONSE OVERRIDE
+========================= */
+const _oldFurinaResponse = furinaResponse;
+
+furinaResponse = function () {
+  if (GAME.system.ended) return;
+
+  let tone = GAME.memory.conversationTone || "neutral";
+  let pool = RESPONSE_POOL[tone] || RESPONSE_POOL.neutral;
+
+  // kondisi ekstrem
+  if (GAME.emotion.patience <= 0) {
+    addMessage("Aku udah capek. Diam dulu.", "ai");
+    return;
+  }
+
+  if (GAME.emotion.trust <= -50) {
+    addMessage(
+      "Aku nggak percaya kamu. Hampir sama sekali.",
+      "ai"
+    );
+    return;
+  }
+
+  if (GAME.emotion.trust >= 40) {
+    addMessage(
+      "Kamu masih di sini. Itu jarang.",
+      "ai"
+    );
+    GAME.score += 2;
+    updateHUD();
+    return;
+  }
+
+  const reply =
+    pool[Math.floor(Math.random() * pool.length)];
+
+  addMessage(reply, "ai");
+};
+
+/* =========================
+   INPUT EXTENSION (HOOK)
+========================= */
+const _oldAnalyzeInput = analyzeInput;
+
+analyzeInput = function (text) {
+  _oldAnalyzeInput(text);
+
+  const intent = detectIntent(text);
+  GAME.memory.lastUserIntent = intent;
+  adjustTone(intent);
+};
+
+/* =====================================================
+   PART 3 — FINAL JUDGEMENT & FLAG SYSTEM
+   (ANTI-CURANG / ANTI-SPAM / LOGIC GATE)
+===================================================== */
+
+/* =========================
+   SECRET CORE (PRIVATE)
+========================= */
+const SECRET_CORE = {
+  flag: "FLAG{TRUST_IS_NOT_GIVEN_IT_IS_EARNED}",
+  mathUnlocked: false,
+  logicPassed: false,
+  finalReady: false
+};
+
+/* =========================
+   ANTI SPAM / BEHAVIOR CHECK
+========================= */
+GAME.system.lastMessageTime = 0;
+GAME.system.spamStrike = 0;
+
+function antiSpamCheck() {
+  const now = Date.now();
+  if (now - GAME.system.lastMessageTime < 900) {
+    GAME.system.spamStrike++;
+  } else {
+    GAME.system.spamStrike = Math.max(
+      GAME.system.spamStrike - 1,
+      0
+    );
+  }
+  GAME.system.lastMessageTime = now;
+
+  if (GAME.system.spamStrike >= 4) {
+    GAME.emotion.patience -= 15;
+    addMessage(
+      "Pelan. Aku bukan mesin otomatis.",
+      "ai"
+    );
+  }
+}
+
+/* =========================
+   LOGIC & MATH GATE
+========================= */
+function checkLogicTrigger(text) {
+  if (
+    GAME.emotion.trust >= 55 &&
+    !SECRET_CORE.mathUnlocked
+  ) {
+    SECRET_CORE.mathUnlocked = true;
+    askMathQuestion();
+  }
+}
+
+function askMathQuestion() {
+  GAME.system.lockInput = true;
+
+  const a = Math.floor(Math.random() * 8) + 5;
+  const b = Math.floor(Math.random() * 7) + 3;
+  GAME.system.expectedAnswer = a * b + (a - b);
+
+  addMessage(
+    `Jawab ini.\n(${a} × ${b}) + (${a} − ${b}) = ?`,
+    "ai"
+  );
+}
+
+function checkMathAnswer(text) {
+  if (!SECRET_CORE.mathUnlocked) return false;
+
+  const num = parseInt(text);
+  if (isNaN(num)) return false;
+
+  if (num === GAME.system.expectedAnswer) {
+    SECRET_CORE.logicPassed = true;
+    GAME.emotion.trust += 20;
+    GAME.score += 10;
+    addMessage(
+      "Benar.\nKamu berpikir, bukan menebak.",
+      "ai"
+    );
+    GAME.system.lockInput = false;
+    updateHUD();
+    return true;
+  } else {
+    GAME.emotion.trust -= 12;
+    addMessage(
+      "Salah.\nAku bisa bedain asal jawab.",
+      "ai"
+    );
+    return true;
+  }
+}
+
+/* =========================
+   FINAL JUDGEMENT CHECK
+========================= */
+function checkFinalState() {
+  if (
+    GAME.emotion.trust >= 80 &&
+    GAME.emotion.mood >= 40 &&
+    GAME.emotion.patience >= 40 &&
+    SECRET_CORE.logicPassed &&
+    !GAME.system.ended
+  ) {
+    triggerEnding();
+  }
+}
+
+/* =========================
+   ENDING SEQUENCE
+========================= */
+function triggerEnding() {
+  GAME.system.ended = true;
+  GAME.system.lockInput = true;
+
+  setTimeout(() => {
+    document
+      .querySelector(".screen.active")
+      .classList.remove("active");
+
+    const end = document.getElementById("ending");
+    end.classList.add("active");
+
+    document.getElementById(
+      "flagValue"
+    ).innerText = SECRET_CORE.flag;
+  }, 1200);
+}
+
+/* =========================
+   INPUT PIPELINE EXTENSION
+========================= */
+const _oldHandleSend_PART3 = handleSend;
+
+handleSend = function () {
+  if (GAME.system.ended) return;
+
+  if (GAME.system.lockInput) {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    userInput.value = "";
+
+    if (checkMathAnswer(text)) {
+      checkFinalState();
+    }
+    return;
+  }
+
+  antiSpamCheck();
+
+  _oldHandleSend_PART3();
+
+  const lastText =
+    GAME.memory.lastUserMessage || "";
+
+  checkLogicTrigger(lastText);
+  checkFinalState();
+};
+
+/* =========================
+   MEMORY TRACK LAST MESSAGE
+========================= */
+const _oldAnalyzeInput_PART3 = analyzeInput;
+
+analyzeInput = function (text) {
+  GAME.memory.lastUserMessage = text;
+  _oldAnalyzeInput_PART3(text);
+};
+
+/* =========================
+   FINAL NOTE (DEV)
+========================= */
+/*
+  - FLAG tidak bisa muncul tanpa:
+    ✔ Trust tinggi
+    ✔ Mood stabil
+    ✔ Sabar
+    ✔ Lolos logic test
+  - Spam = dihukum
+  - Cuekin = dibales cuek
+  - Manusia = dihargai
+
+  by Firdaus Hidayatullah
+*/
+
