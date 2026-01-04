@@ -18,6 +18,7 @@ const celebration = document.getElementById("celebration");
    ========================= */
 let userName = "Kamu";
 let score = 0;
+
 let angry = false;
 let rage = 0;
 let sadness = 0;
@@ -30,13 +31,21 @@ let keywordHistory = [];
    SCREEN SWITCH
    ========================= */
 function showScreen(id){
-  screens.forEach(s=>s.classList.remove("active"));
+  screens.forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
 
+/* =========================
+   START
+   ========================= */
 welcomeBtn.onclick = ()=>{
   userName = nameInput.value.trim() || "Kamu";
   showScreen("app");
+
+  input.disabled = false;
+  send.disabled = false;
+  input.focus();
+
   opening();
 };
 
@@ -46,7 +55,7 @@ welcomeBtn.onclick = ()=>{
 function updateClock(){
   const d = new Date();
   clockEl.textContent =
-    String(d.getHours()).padStart(2,"0")+":"+
+    String(d.getHours()).padStart(2,"0") + ":" +
     String(d.getMinutes()).padStart(2,"0");
 }
 setInterval(updateClock,1000);
@@ -57,7 +66,7 @@ updateClock();
    ========================= */
 function addMsg(text,type){
   const div = document.createElement("div");
-  div.className = "msg "+type;
+  div.className = "msg " + type;
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
@@ -69,9 +78,9 @@ function addMsg(text,type){
 function opening(){
   addMsg(
 `Aku tidak mudah percaya, ${userName}.
-Ini bukan obrolan biasa.
-Bicara dengan niat.`,
-  "ai");
+Bicara seperlunya.`,
+  "ai"
+  );
 }
 
 /* =========================
@@ -87,7 +96,7 @@ function detectTone(text){
 }
 
 /* =========================
-   MEMORY (3 CHAT)
+   MEMORY (3 CHAT TERAKHIR)
    ========================= */
 function updateMemory(text){
   chatMemory.push(text);
@@ -586,6 +595,7 @@ const dataset = [
    
 ];
 
+
 /* =========================
    AI ENGINE
    ========================= */
@@ -599,51 +609,49 @@ function furinaReply(text){
   /* ===== MALAM ===== */
   if(hour >= 0 && hour <= 4){
     angry = true;
-    return "Sudah malam.\nAku ingin berhenti dulu.";
+    return "Sudah larut.\nAku ingin berhenti.";
   }
 
   if(angry){
     score -= 2;
     rage++;
-    return "Aku sudah bilang.\nJangan memaksa.";
+    return "Aku tidak ingin melanjutkan sekarang.";
   }
 
-  /* ===== SPAM CHAT ===== */
+  /* ===== SPAM ===== */
   if(isRepeating()){
     score -= 5;
     rage += 2;
-    return "Kamu mengulang hal yang sama.\nItu melelahkan.";
+    return "Kamu mengulang hal yang sama.";
   }
 
-  /* ===== FASE NANGIS ===== */
+  /* ===== FASE SEDIH ===== */
   if(sadness >= 10 && sadness < 18){
     sadness++;
-    return "…\nAku tidak mengerti kenapa percakapan ini begini.\nAku kira kamu berbeda.";
+    return "…\nAku tidak nyaman dengan arah ini.";
   }
 
   if(sadness >= 18){
-    score -= 5;
-    return "Aku capek.\nAku ingin diam.\nTolong.";
+    return "Aku ingin diam.\nTolong.";
   }
 
-  /* ===== FASE SUPER MARAH ===== */
+  /* ===== FASE MARAH ===== */
   if(rage >= 15 && rage < 25){
     rage++;
-    return "Aku sudah memperingatkan.\nNada bicaramu salah.\nAku tidak suka ini.";
+    return "Nada bicaramu salah.\nAku tidak suka ini.";
   }
 
   if(rage >= 25 && fakeEndingStage === 0){
     fakeEndingStage = 1;
-    return "Cukup.\nAku selesai.\n\n— koneksi terputus —";
+    return "Cukup.\n— koneksi terputus —";
   }
 
-  /* ===== FAKE ENDING LANJUT ===== */
   if(fakeEndingStage === 1){
     fakeEndingStage = 2;
-    return "…\nAku kembali.\nTapi jangan kira ini mudah.";
+    return "…\nAku kembali.\nJangan ulangi kesalahanmu.";
   }
 
-  /* ===== DATASET MATCH ===== */
+  /* ===== DATASET ===== */
   for(const d of dataset){
     for(const k of d.key){
       if(t.includes(k)){
@@ -651,14 +659,14 @@ function furinaReply(text){
         if(abuseKeyword(k)){
           score -= 3;
           rage += 2;
-          return "Jangan ulangi kata yang sama hanya untuk hasil.";
+          return "Jangan ulangi kata itu.";
         }
 
         registerKeyword(k);
-
         score += d.score;
+
         if(d.score < 0) rage += Math.abs(d.score);
-        if(d.score < -5) sadness += 2;
+        if(d.score <= -5) sadness += 2;
 
         return d.reply[tone] || d.reply.netral;
       }
@@ -686,7 +694,7 @@ send.onclick = ()=>{
     if(score >= 100){
       celebration.classList.remove("hidden");
       addMsg(
-"Selamat.\nKamu berhasil.\n\nFLAG{sana minta uang ke daus buat beliin aku bunga}",
+"Baik.\nAku percaya.\n\nFLAG{sana minta uang ke daus buat beliin aku bunga}",
       "ai");
       input.disabled = true;
       send.disabled = true;
@@ -697,5 +705,5 @@ send.onclick = ()=>{
 };
 
 input.addEventListener("keypress",e=>{
-  if(e.key==="Enter") send.click();
-});                       
+  if(e.key === "Enter") send.click();
+});
