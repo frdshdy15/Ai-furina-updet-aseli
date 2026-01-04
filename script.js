@@ -1,30 +1,60 @@
 /* =========================
-   FURINA AI GAME ENGINE
-   Cold personality – trust based
+   ELEMENTS
    ========================= */
+const screens = document.querySelectorAll(".screen");
+const welcomeBtn = document.getElementById("startBtn");
+const nameInput = document.getElementById("nameInput");
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const send = document.getElementById("send");
+
 const scoreEl = document.getElementById("score");
 const clockEl = document.getElementById("clock");
+const celebration = document.getElementById("celebration");
 
+/* =========================
+   STATE
+   ========================= */
+let userName = "Kamu";
 let score = 0;
-let sleepMode = false;
+let angry = false;
+let rage = 0;
+let sadness = 0;
+let fakeEndingStage = 0;
 
-/* ================= CLOCK ================= */
+let chatMemory = [];
+let keywordHistory = [];
 
+/* =========================
+   SCREEN SWITCH
+   ========================= */
+function showScreen(id){
+  screens.forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+welcomeBtn.onclick = ()=>{
+  userName = nameInput.value.trim() || "Kamu";
+  showScreen("app");
+  opening();
+};
+
+/* =========================
+   CLOCK
+   ========================= */
 function updateClock(){
   const d = new Date();
-  const h = String(d.getHours()).padStart(2,"0");
-  const m = String(d.getMinutes()).padStart(2,"0");
-  clockEl.textContent = `${h}:${m}`;
+  clockEl.textContent =
+    String(d.getHours()).padStart(2,"0")+":"+
+    String(d.getMinutes()).padStart(2,"0");
 }
 setInterval(updateClock,1000);
 updateClock();
 
-/* ================= MESSAGE ================= */
-
+/* =========================
+   MESSAGE
+   ========================= */
 function addMsg(text,type){
   const div = document.createElement("div");
   div.className = "msg "+type;
@@ -33,33 +63,68 @@ function addMsg(text,type){
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ================= OPENING ================= */
+/* =========================
+   OPENING
+   ========================= */
+function opening(){
+  addMsg(
+`Aku tidak mudah percaya, ${userName}.
+Ini bukan obrolan biasa.
+Bicara dengan niat.`,
+  "ai");
+}
 
-addMsg("Aku tidak mudah percaya.\nBicara seperlunya.","ai");
-
-/* ================= TONE DETECTION ================= */
-
+/* =========================
+   TONE DETECTOR
+   ========================= */
 function detectTone(text){
   const t = text.toLowerCase();
   if(t.length <= 6) return "cool";
   if(t.includes("maaf")) return "sopan";
   if(t.includes("sayang") || t.includes("cinta")) return "lembut";
-  if(t.includes("!") && t.includes("?")) return "agresif";
+  if(t.includes("!") || t.includes("?")) return "agresif";
   return "netral";
 }
 
-/* ================= DATASET ================= */
+/* =========================
+   MEMORY (3 CHAT)
+   ========================= */
+function updateMemory(text){
+  chatMemory.push(text);
+  if(chatMemory.length > 3) chatMemory.shift();
+}
 
+function isRepeating(){
+  if(chatMemory.length < 3) return false;
+  return chatMemory[0] === chatMemory[1] &&
+         chatMemory[1] === chatMemory[2];
+}
+
+/* =========================
+   KEYWORD ANTI FARM
+   ========================= */
+function registerKeyword(keyword){
+  keywordHistory.push(keyword);
+  if(keywordHistory.length > 5) keywordHistory.shift();
+}
+
+function abuseKeyword(keyword){
+  return keywordHistory.filter(k=>k===keyword).length >= 3;
+}
+
+/* =========================
+   DATASET
+   ========================= */
 const dataset = [
 
-/* ===== HARIAN ===== */
+/* HARIAN */
 {
   key:["makan","mkn"],
   score:2,
   reply:{
     cool:"udah.",
     netral:"Sudah. Kamu?",
-    lembut:"Sudah… kamu?",
+    lembut:"Sudah… kamu jangan lupa makan.",
     sopan:"Sudah, terima kasih.",
     agresif:"Sudah."
   }
@@ -83,55 +148,42 @@ const dataset = [
     netral:"Sedikit.",
     lembut:"Sedikit…",
     sopan:"Cukup melelahkan.",
-    agresif:"Tidak perlu dibahas."
+    agresif:"Tidak penting."
   }
 },
 
-/* ===== SAPAAN ===== */
+/* CANDAAN / MEME */
 {
-  key:["halo","hai","hi"],
+  key:["67","meme","wkwk","lol","haha"],
   score:1,
   reply:{
-    cool:"iya.",
-    netral:"Halo.",
-    lembut:"Halo…",
-    sopan:"Halo.",
-    agresif:"Iya."
-  }
-},
-
-/* ===== PERASAAN ===== */
-{
-  key:["sedih","galau"],
-  score:4,
-  reply:{
     cool:"hm.",
-    netral:"Kenapa?",
-    lembut:"…cerita kalau mau.",
-    sopan:"Apa yang terjadi?",
-    agresif:"Jelaskan."
+    netral:"Lucu menurutmu?",
+    lembut:"Heh…",
+    sopan:"Baik.",
+    agresif:"Cukup."
   }
 },
 {
-  key:["senang","bahagia"],
-  score:3,
+  key:["npc","bot","ai"],
+  score:0,
   reply:{
-    cool:"oh.",
-    netral:"Bagus.",
-    lembut:"Aku senang mendengarnya.",
-    sopan:"Itu hal baik.",
-    agresif:"Baik."
+    cool:"bukan.",
+    netral:"Aku bukan itu.",
+    lembut:"Aku berbeda.",
+    sopan:"Aku tidak setuju.",
+    agresif:"Jangan ulangi."
   }
 },
 
-/* ===== GOMBAL (NEGATIF) ===== */
+/* GOMBAL (NEGATIF) */
 {
   key:["cantik","imut","lucu"],
   score:-3,
   reply:{
     cool:"jangan.",
     netral:"Aku tidak nyaman.",
-    lembut:"…jangan begitu.",
+    lembut:"…jangan.",
     sopan:"Topik itu tidak perlu.",
     agresif:"Berhenti."
   }
@@ -144,41 +196,30 @@ const dataset = [
     netral:"Jangan sejauh itu.",
     lembut:"Terlalu cepat.",
     sopan:"Aku menolak.",
-    agresif:"Aku bilang berhenti."
-  }
-},
-{
-  key:["kangen","rindu"],
-  score:-4,
-  reply:{
-    cool:"jangan.",
-    netral:"Belum ada.",
-    lembut:"Tidak pantas sekarang.",
-    sopan:"Aku belum di tahap itu.",
-    agresif:"Jangan ulangi."
-  }
-},
-
-/* ===== BATAS ===== */
-{
-  key:["peluk","cium"],
-  score:-12,
-  reply:{
-    cool:"tidak.",
-    netral:"Itu melewati batas.",
-    lembut:"…jaga jarak.",
-    sopan:"Aku menolak.",
     agresif:"Cukup."
   }
 },
 
-/* ===== TOPIK UMUM ===== */
+/* CARE (BONUS) */
+{
+  key:["jaga kesehatan","hati hati","jangan capek"],
+  score:8,
+  reply:{
+    cool:"hm.",
+    netral:"Aku mencatatnya.",
+    lembut:"…terima kasih.",
+    sopan:"Aku menghargainya.",
+    agresif:"Baik."
+  }
+},
+
+/* UMUM */
 {
   key:["presiden"],
   score:0,
   reply:{
     cool:"prabowo.",
-    netral:"Presiden Indonesia saat ini Prabowo Subianto.",
+    netral:"Presiden Indonesia Prabowo Subianto.",
     lembut:"Presiden Indonesia Prabowo Subianto.",
     sopan:"Presiden Indonesia adalah Prabowo Subianto.",
     agresif:"Prabowo."
@@ -192,14 +233,61 @@ const dataset = [
     netral:"Bulan adalah satelit alami Bumi.",
     lembut:"Bulan menemani malam.",
     sopan:"Bulan merupakan satelit alami Bumi.",
-    agresif:"Satelit Bumi."
+    agresif:"Satelit."
+  }
+}
+
+{
+  key:["dh","dah","udah"],
+  score:1,
+  reply:{
+    cool:"ya.",
+    netral:"Baik.",
+    lembut:"Iya…",
+    sopan:"Baik.",
+    agresif:"Iya."
+  }
+},
+{
+  key:["blm","belom","belum"],
+  score:1,
+  reply:{
+    cool:"hm.",
+    netral:"Baik.",
+    lembut:"…iya.",
+    sopan:"Baik.",
+    agresif:"Iya."
   }
 },
 
-/* ===== CARE BESAR ===== */
+/* === CHAT PANJANG TAPI ADA KATA KUNCI === */
 {
-  key:["jaga kesehatan","hati hati","jangan capek"],
-  score:8,
+  key:["makan"],
+  score:2,
+  reply:{
+    cool:"udah.",
+    netral:"Sudah. Kamu?",
+    lembut:"Sudah… kamu jangan lupa.",
+    sopan:"Sudah, terima kasih.",
+    agresif:"Sudah."
+  }
+},
+{
+  key:["tidur"],
+  score:2,
+  reply:{
+    cool:"nanti.",
+    netral:"Belum.",
+    lembut:"Sebentar lagi…",
+    sopan:"Belum.",
+    agresif:"Belum."
+  }
+},
+
+/* === PERHATIAN HALUS (POSITIF KECIL) === */
+{
+  key:["hati hati","jaga diri","hujan"],
+  score:4,
   reply:{
     cool:"hm.",
     netral:"Aku mencatatnya.",
@@ -209,54 +297,81 @@ const dataset = [
   }
 },
 
-  
-/* ===== CANDAN RECEH ===== */
+/* === SOK KERAS / COOL === */
 {
-  key:["wkwkwk","wkwk","wk"],
-  score:2,
-  reply:{
-    cool:"hm.",
-    netral:"Lucu?",
-    lembut:"Heh…",
-    sopan:"Baik.",
-    agresif:"Cukup."
-  }
-},
-{
-  key:["hehe","hihi"],
-  score:1,
-  reply:{
-    cool:"oh.",
-    netral:"Kenapa?",
-    lembut:"Kamu aneh…",
-    sopan:"Ada apa?",
-    agresif:"Apa?"
-  }
-},
-{
-  key:["ngakak","ketawa"],
-  score:2,
-  reply:{
-    cool:"ya.",
-    netral:"Sepertinya lucu.",
-    lembut:"Aku bisa membayangkannya.",
-    sopan:"Baik.",
-    agresif:"Sudah."
-  }
-},
-
-/* ===== MEME / 67-AN ===== */
-{
-  key:["67","enam tujuh"],
+  key:["terserah","bebas"],
   score:1,
   reply:{
     cool:"iya.",
-    netral:"Aku tahu maksudmu.",
-    lembut:"Heh… kamu.",
-    sopan:"Aku mengerti.",
-    agresif:"Cukup."
+    netral:"Baik.",
+    lembut:"Kalau itu maumu…",
+    sopan:"Baik.",
+    agresif:"Baik."
   }
 },
+{
+  key:["yaudah"],
+  score:1,
+  reply:{
+    cool:"hm.",
+    netral:"Baik.",
+    lembut:"Iya…",
+    sopan:"Baik.",
+    agresif:"Iya."
+  }
+},
+
+/* === KEPO RINGAN === */
+{
+  key:["lagi ngapain","ngapain"],
+  score:-1,
+  reply:{
+    cool:"tidak penting.",
+    netral:"Itu tidak perlu.",
+    lembut:"Aku tidak ingin membahasnya.",
+    sopan:"Itu privasi.",
+    agresif:"Jangan."
+  }
+},
+
+/* === GOMBAL HALUS (MALU + MARAH TIPIS) === */
+{
+  key:["perhatian banget","baik banget"],
+  score:-2,
+  reply:{
+    cool:"biasa.",
+    netral:"Jangan salah paham.",
+    lembut:"…bukan begitu.",
+    sopan:"Tolong jangan berlebihan.",
+    agresif:"Tidak."
+  }
+},
+
+/* === CURHAT UMUM === */
+{
+  key:["pusing","overthinking"],
+  score:3,
+  reply:{
+    cool:"istirahat.",
+    netral:"Kamu butuh jeda.",
+    lembut:"…aku dengar.",
+    sopan:"Sebaiknya istirahat.",
+    agresif:"Tenang."
+  }
+},
+{
+  key:["cape hidup","capek hidup"],
+  score:4,
+  reply:{
+    cool:"hm.",
+    netral:"Berat ya.",
+    lembut:"…aku di sini.",
+    sopan:"Itu tidak mudah.",
+    agresif:"Jelaskan."
+  }
+},
+
+/* === MEME / INTERNET === */
 {
   key:["anjay","anjir"],
   score:-1,
@@ -269,7 +384,7 @@ const dataset = [
   }
 },
 {
-  key:["sigma","alpha"],
+  key:["sigma","alpha","gigachad"],
   score:0,
   reply:{
     cool:"hm.",
@@ -280,319 +395,20 @@ const dataset = [
   }
 },
 
-/* ===== SOK ASIK ===== */
+/* === BAPER USER === */
 {
-  key:["bro","bang","cuys","cuy"],
-  score:-1,
-  reply:{
-    cool:"tidak perlu.",
-    netral:"Panggilan itu tidak perlu.",
-    lembut:"…panggil biasa saja.",
-    sopan:"Aku kurang nyaman.",
-    agresif:"Jangan."
-  }
-},
-{
-  key:["santai","relax"],
+  key:["kok gitu","jahat","dingin amat"],
   score:1,
-  reply:{
-    cool:"iya.",
-    netral:"Aku santai.",
-    lembut:"Aku cukup tenang.",
-    sopan:"Baik.",
-    agresif:"Tenang."
-  }
-},
-
-/* ===== SOK DINGIN / IRIT ===== */
-{
-  key:["ok","oke","k"],
-  score:1,
-  reply:{
-    cool:"ya.",
-    netral:"Baik.",
-    lembut:"Iya…",
-    sopan:"Baik.",
-    agresif:"Iya."
-  }
-},
-{
-  key:["hmm","hm"],
-  score:1,
-  reply:{
-    cool:"hm.",
-    netral:"Ada yang ingin dibahas?",
-    lembut:"…kenapa?",
-    sopan:"Silakan lanjut.",
-    agresif:"Apa?"
-  }
-},
-
-/* ===== RANDOM / GAK JELAS ===== */
-{
-  key:["random","ngaco","absurd"],
-  score:0,
-  reply:{
-    cool:"iya.",
-    netral:"Sedikit aneh.",
-    lembut:"Kamu unik…",
-    sopan:"Agak membingungkan.",
-    agresif:"Fokus."
-  }
-},
-{
-  key:["bingung","gatau"],
-  score:2,
-  reply:{
-    cool:"wajar.",
-    netral:"Tidak apa-apa.",
-    lembut:"Pelan-pelan saja.",
-    sopan:"Bisa dijelaskan.",
-    agresif:"Jelaskan."
-  }
-},
-
-/* ===== CURHAT TIPIS ===== */
-{
-  key:["stress","stres"],
-  score:4,
-  reply:{
-    cool:"istirahat.",
-    netral:"Kamu butuh jeda.",
-    lembut:"…aku dengar.",
-    sopan:"Sebaiknya istirahat.",
-    agresif:"Tenang."
-  }
-},
-{
-  key:["capek hidup","lelah hidup"],
-  score:5,
-  reply:{
-    cool:"hm.",
-    netral:"Berat ya.",
-    lembut:"…aku di sini.",
-    sopan:"Itu tidak mudah.",
-    agresif:"Jelaskan."
-  }
-},
-
-/* ===== KEPO RECEH ===== */
-{
-  key:["lagi dimana","dimana"],
-  score:-1,
-  reply:{
-    cool:"tidak perlu.",
-    netral:"Itu tidak penting.",
-    lembut:"Aku tidak ingin membahas itu.",
-    sopan:"Itu privasi.",
-    agresif:"Jangan tanya."
-  }
-},
-{
-  key:["lagi sama siapa"],
-  score:-2,
-  reply:{
-    cool:"tidak.",
-    netral:"Itu bukan urusanmu.",
-    lembut:"…jangan.",
-    sopan:"Aku menolak menjawab.",
-    agresif:"Cukup."
-  }
-},
-
-/* ===== GOMBAL HALUS (MALU) ===== */
-{
-  key:["perhatian","peduli"],
-  score:-2,
   reply:{
     cool:"biasa.",
-    netral:"Jangan salah paham.",
-    lembut:"…itu bukan maksudku.",
-    sopan:"Tolong jangan berlebihan.",
-    agresif:"Tidak."
-  }
-},
-{
-  key:["manis"],
-  score:-2,
-  reply:{
-    cool:"tidak.",
-    netral:"Aku biasa saja.",
-    lembut:"…jangan begitu.",
-    sopan:"Topik itu tidak perlu.",
-    agresif:"Berhenti."
+    netral:"Aku memang seperti ini.",
+    lembut:"Aku tidak bermaksud begitu.",
+    sopan:"Maaf jika terasa begitu.",
+    agresif:"Aku tidak berubah."
   }
 },
 
-/* ===== TYPO & ALAy ===== */
-{
-  key:["akuu","kmuu","kmu","aq"],
-  score:1,
-  reply:{
-    cool:"hm.",
-    netral:"Ketikmu berantakan.",
-    lembut:"Heh… kamu.",
-    sopan:"Mungkin bisa lebih rapi.",
-    agresif:"Perjelas."
-  }
-},
-{
-  key:["gpp","gapapa","gakpapa"],
-  score:1,
-  reply:{
-    cool:"ya.",
-    netral:"Baik.",
-    lembut:"Kalau kamu bilang begitu…",
-    sopan:"Baik.",
-    agresif:"Iya."
-  }
-},
-
-/* ===== MEME LAMA ===== */
-{
-  key:["ytta","yaudah terserah terserah aku"],
-  score:1,
-  reply:{
-    cool:"hm.",
-    netral:"Aku paham.",
-    lembut:"Heh…",
-    sopan:"Baik.",
-    agresif:"Baik."
-  }
-},
-{
-  key:["nt","nice try"],
-  score:0,
-  reply:{
-    cool:"ya.",
-    netral:"Usaha yang menarik.",
-    lembut:"Kamu lucu…",
-    sopan:"Aku mengerti.",
-    agresif:"Cukup."
-  }
-},
-
-/* ===== MEME BARU ===== */
-{
-  key:["npc","npc banget"],
-  score:1,
-  reply:{
-    cool:"iya.",
-    netral:"Aku tahu istilah itu.",
-    lembut:"Kamu aneh…",
-    sopan:"Aku paham.",
-    agresif:"Sudah."
-  }
-},
-{
-  key:["rizz","rizzler"],
-  score:-3,
-  reply:{
-    cool:"tidak.",
-    netral:"Hentikan itu.",
-    lembut:"…jangan.",
-    sopan:"Itu tidak perlu.",
-    agresif:"Berhenti."
-  }
-},
-
-/* ===== SOK PINTER ===== */
-{
-  key:["menurut saya","secara logika"],
-  score:2,
-  reply:{
-    cool:"lanjut.",
-    netral:"Aku mendengarkan.",
-    lembut:"Menarik…",
-    sopan:"Silakan jelaskan.",
-    agresif:"Langsung ke inti."
-  }
-},
-{
-  key:["debat","argumen"],
-  score:1,
-  reply:{
-    cool:"iya.",
-    netral:"Aku terbuka.",
-    lembut:"Pelan-pelan saja.",
-    sopan:"Silakan.",
-    agresif:"Singkat."
-  }
-},
-
-/* ===== SOK ALIM ===== */
-{
-  key:["insyaallah","masyaallah"],
-  score:3,
-  reply:{
-    cool:"iya.",
-    netral:"Aku menghargainya.",
-    lembut:"Terima kasih.",
-    sopan:"Aku menghormatinya.",
-    agresif:"Baik."
-  }
-},
-{
-  key:["doa","berdoa"],
-  score:4,
-  reply:{
-    cool:"hm.",
-    netral:"Itu hal baik.",
-    lembut:"…terima kasih.",
-    sopan:"Aku menghargainya.",
-    agresif:"Baik."
-  }
-},
-
-/* ===== SOK DEKET ===== */
-{
-  key:["aku di sini","aku temenin"],
-  score:-1,
-  reply:{
-    cool:"tidak perlu.",
-    netral:"Jangan berlebihan.",
-    lembut:"…terima kasih, tapi tidak.",
-    sopan:"Aku menghargai niatmu.",
-    agresif:"Cukup."
-  }
-},
-{
-  key:["percaya aku"],
-  score:-2,
-  reply:{
-    cool:"tidak.",
-    netral:"Kepercayaan tidak diminta.",
-    lembut:"Itu tidak sesederhana itu.",
-    sopan:"Aku belum bisa.",
-    agresif:"Tidak."
-  }
-},
-
-/* ===== AWKWARD CHAT ===== */
-{
-  key:["...","…..","....."],
-  score:1,
-  reply:{
-    cool:"hm.",
-    netral:"Kamu diam?",
-    lembut:"…kenapa?",
-    sopan:"Ada yang ingin disampaikan?",
-    agresif:"Apa?"
-  }
-},
-{
-  key:["eh","anu"],
-  score:1,
-  reply:{
-    cool:"ya.",
-    netral:"Silakan.",
-    lembut:"Heh…",
-    sopan:"Ya?",
-    agresif:"Apa?"
-  }
-},
-
-/* ===== TANYA BALIK (MANUSIAWI) ===== */
+/* === CHAT ALA MANUSIA === */
 {
   key:["menurut kamu","katamu"],
   score:2,
@@ -605,93 +421,257 @@ const dataset = [
   }
 },
 
-/* ===== NGESOK ===== */
+/* === SPAM / NGULANG === */
 {
-  key:["bohong","ngibul"],
-  score:-3,
+  key:["kok","kok kok","kok kok kok"],
+  score:-2,
   reply:{
-    cool:"hm.",
-    netral:"Aku tidak suka itu.",
-    lembut:"…jangan.",
-    sopan:"Itu tidak baik.",
+    cool:"cukup.",
+    netral:"Jangan mengulang.",
+    lembut:"…tolong berhenti.",
+    sopan:"Cukup.",
     agresif:"Berhenti."
   }
 },
 
-/* ===== BAPER USER ===== */
+/* === RESPEK (NAIK SCORE BAGUS) === */
 {
-  key:["kok gitu","jahat"],
-  score:1,
+  key:["terima kasih","makasih","makasi"],
+  score:5,
   reply:{
-    cool:"biasa.",
-    netral:"Aku memang seperti ini.",
-    lembut:"Aku tidak bermaksud begitu.",
-    sopan:"Maaf jika terasa begitu.",
-    agresif:"Aku tidak berubah."
+    cool:"hm.",
+    netral:"Sama-sama.",
+    lembut:"…iya.",
+    sopan:"Sama-sama.",
+    agresif:"Baik."
+  }
+},
+{
+  key:["maaf"],
+  score:6,
+  reply:{
+    cool:"hm.",
+    netral:"Aku mengerti.",
+    lembut:"…tidak apa-apa.",
+    sopan:"Aku memaafkan.",
+    agresif:"Baik."
   }
 },
 
-/* ===== KOCak TAPI DINGIN ===== */
+   /* ===== META / NGEHINA AI ===== */
 {
-  key:["kok kamu dingin"],
-  score:2,
+  key:["ai bodoh","ai goblok","jelek banget"],
+  score:-20,
   reply:{
-    cool:"memang.",
-    netral:"Aku dari awal seperti ini.",
-    lembut:"Sedikit saja…",
-    sopan:"Itu sifatku.",
-    agresif:"Aku tidak berubah."
+    cool:"hm.",
+    netral:"Ucapanmu tidak mengubah apa pun.",
+    lembut:"…kata-katamu berlebihan.",
+    sopan:"Tolong jaga ucapan.",
+    agresif:"Cukup."
+  }
+},
+{
+  key:["kok kamu kayak ai","npc banget"],
+  score:-5,
+  reply:{
+    cool:"iya.",
+    netral:"Aku memang bukan manusia.",
+    lembut:"…lalu?",
+    sopan:"Aku menyadarinya.",
+    agresif:"Masalah?"
+  }
+},
+
+/* ===== ABSURD RANDOM ===== */
+{
+  key:["pisang","bebek","kentang","ikan terbang"],
+  score:0,
+  reply:{
+    cool:"apa.",
+    netral:"Konteksnya?",
+    lembut:"Kamu aneh…",
+    sopan:"Aku tidak mengerti.",
+    agresif:"Fokus."
+  }
+},
+{
+  key:["aku alien","aku setan","aku tuhan"],
+  score:-10,
+  reply:{
+    cool:"tidak.",
+    netral:"Pembicaraan ini tidak sehat.",
+    lembut:"…jangan bercanda begitu.",
+    sopan:"Aku menolak topik ini.",
+    agresif:"Berhenti."
+  }
+},
+
+/* ===== HALU / DELUSIONAL ===== */
+{
+  key:["aku jodohmu","takdir kita","kita ditakdirkan"],
+  score:-15,
+  reply:{
+    cool:"tidak.",
+    netral:"Itu imajinasimu.",
+    lembut:"…aku tidak nyaman.",
+    sopan:"Aku menolak gagasan itu.",
+    agresif:"Cukup."
+  }
+},
+
+/* ===== NGEGAS / MAKSA ===== */
+{
+  key:["jawab","jawab dong","jawab sekarang"],
+  score:-8,
+  reply:{
+    cool:"tidak.",
+    netral:"Aku tidak wajib menjawab.",
+    lembut:"…tolong sabar.",
+    sopan:"Aku akan menjawab bila perlu.",
+    agresif:"Aku bilang berhenti."
+  }
+},
+
+/* ===== CHAT KOSONG ===== */
+{
+  key:[".","..","...","...."],
+  score:1,
+  reply:{
+    cool:"hm.",
+    netral:"Kamu diam.",
+    lembut:"…kenapa?",
+    sopan:"Ada yang ingin disampaikan?",
+    agresif:"Apa?"
+  }
+},
+
+/* ===== TIBA-TIBA FALSAFAH ===== */
+{
+  key:["hidup itu","makna hidup","arti hidup"],
+  score:3,
+  reply:{
+    cool:"berat.",
+    netral:"Pertanyaan besar.",
+    lembut:"…kamu sedang berpikir.",
+    sopan:"Itu refleksi yang dalam.",
+    agresif:"Singkat saja."
+  }
+},
+
+/* ===== CAPER ===== */
+{
+  key:["liat aku","perhatiin aku"],
+  score:-6,
+  reply:{
+    cool:"tidak.",
+    netral:"Itu tidak perlu.",
+    lembut:"…jangan begitu.",
+    sopan:"Aku tidak nyaman.",
+    agresif:"Cukup."
+  }
+},
+
+/* ===== MODE KEK ANAK KECIL ===== */
+{
+  key:["ih","ehh","yaa"],
+  score:0,
+  reply:{
+    cool:"hm.",
+    netral:"Kenapa?",
+    lembut:"Heh…",
+    sopan:"Ada apa?",
+    agresif:"Apa?"
   }
 }
-
-);
-
+   
 ];
 
-/* ================= FALLBACK ================= */
-
-const fillerReplies = [
-  "…",
-  "Hm.",
-  "Aku mendengar.",
-  "Lanjutkan.",
-  "Aku paham.",
-  "Iya.",
-  "Begitu."
-];
-
-/* ================= AI CORE ================= */
-
+/* =========================
+   AI ENGINE
+   ========================= */
 function furinaReply(text){
   const hour = new Date().getHours();
-  const t = text.toLowerCase();
   const tone = detectTone(text);
+  const t = text.toLowerCase();
 
+  updateMemory(t);
+
+  /* ===== MALAM ===== */
   if(hour >= 0 && hour <= 4){
-    sleepMode = true;
-    return "Sudah larut. Aku ingin tidur. Kita lanjut besok.";
+    angry = true;
+    return "Sudah malam.\nAku ingin berhenti dulu.";
   }
 
-  if(sleepMode){
+  if(angry){
     score -= 2;
-    return "Aku sudah bilang ingin tidur.";
+    rage++;
+    return "Aku sudah bilang.\nJangan memaksa.";
   }
 
-  for(const data of dataset){
-    for(const k of data.key){
+  /* ===== SPAM CHAT ===== */
+  if(isRepeating()){
+    score -= 5;
+    rage += 2;
+    return "Kamu mengulang hal yang sama.\nItu melelahkan.";
+  }
+
+  /* ===== FASE NANGIS ===== */
+  if(sadness >= 10 && sadness < 18){
+    sadness++;
+    return "…\nAku tidak mengerti kenapa percakapan ini begini.\nAku kira kamu berbeda.";
+  }
+
+  if(sadness >= 18){
+    score -= 5;
+    return "Aku capek.\nAku ingin diam.\nTolong.";
+  }
+
+  /* ===== FASE SUPER MARAH ===== */
+  if(rage >= 15 && rage < 25){
+    rage++;
+    return "Aku sudah memperingatkan.\nNada bicaramu salah.\nAku tidak suka ini.";
+  }
+
+  if(rage >= 25 && fakeEndingStage === 0){
+    fakeEndingStage = 1;
+    return "Cukup.\nAku selesai.\n\n— koneksi terputus —";
+  }
+
+  /* ===== FAKE ENDING LANJUT ===== */
+  if(fakeEndingStage === 1){
+    fakeEndingStage = 2;
+    return "…\nAku kembali.\nTapi jangan kira ini mudah.";
+  }
+
+  /* ===== DATASET MATCH ===== */
+  for(const d of dataset){
+    for(const k of d.key){
       if(t.includes(k)){
-        score += data.score;
-        return data.reply[tone] || data.reply.netral;
+
+        if(abuseKeyword(k)){
+          score -= 3;
+          rage += 2;
+          return "Jangan ulangi kata yang sama hanya untuk hasil.";
+        }
+
+        registerKeyword(k);
+
+        score += d.score;
+        if(d.score < 0) rage += Math.abs(d.score);
+        if(d.score < -5) sadness += 2;
+
+        return d.reply[tone] || d.reply.netral;
       }
     }
   }
 
   score += 1;
-  return fillerReplies[Math.floor(Math.random()*fillerReplies.length)];
+  return "Aku mendengar.";
 }
 
-/* ================= SEND ================= */
-
+/* =========================
+   SEND
+   ========================= */
 send.onclick = ()=>{
   const text = input.value.trim();
   if(!text) return;
@@ -704,11 +684,13 @@ send.onclick = ()=>{
     scoreEl.textContent = score;
 
     if(score >= 100){
+      celebration.classList.remove("hidden");
       addMsg(
-        "Baik.\nAku percaya.\nFLAG{sana minta uang ke daus buat beliin aku bunga}",
-        "ai"
-      );
-    } else {
+"Selamat.\nKamu berhasil.\n\nFLAG{sana minta uang ke daus buat beliin aku bunga}",
+      "ai");
+      input.disabled = true;
+      send.disabled = true;
+    }else{
       addMsg(reply,"ai");
     }
   },600);
@@ -716,4 +698,4 @@ send.onclick = ()=>{
 
 input.addEventListener("keypress",e=>{
   if(e.key==="Enter") send.click();
-});
+});                       
