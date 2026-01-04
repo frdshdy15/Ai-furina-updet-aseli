@@ -1,145 +1,137 @@
 "use strict";
 
 /**
- * FURINA: THE LIVING SOUL (V5.0 - MEMORY CORE)
- * Fitur: Long-Term Memory, Contextual Recall, Deep Empathy
- * Logic by: Frdshdy
+ * FURINA: HUMAN-LOGIC ENGINE (V6.0)
+ * Fitur: Anti-Repeat, Topic Locking, Emotional Memory Recall
  */
 
 const STATE = {
     username: "Traveler",
-    trust: 30,
-    mood: "THEATRICAL", 
-    // Memori Jangka Panjang: Menyimpan fakta tentang user
+    trust: 40,
+    mood: "NORMAL",
+    currentTopic: "none", // Menjaga agar obrolan nyambung
+    history: [], // Mencegah pengulangan kalimat yang sama
     memoryBank: {
-        lastTopic: "",
-        userFeelings: [],
-        secrets: [],
-        mentionCount: 0
-    },
-    isEnded: false
-};
-
-// --- [1] SOUL FRAGMENTS (Dataset Puitis & Empati) ---
-const SOUL = {
-    fillers: {
-        THEATRICAL: ["Tahukah kau,", "Di atas panggung ini,", "Seorang Archon sepertiku melihat..."],
-        MELANCHOLY: ["Di kegelapan Fontaine,", "Air mata yang jatuh ke laut...", "Terkadang sepi itu..."],
-        WARM: ["Dengar, figuran kecilku,", "Mungkin kau benar,", "Aku ada di sini untukmu,"],
-        ANGRY: ["Cukup!", "Lidahmu terlalu tajam!", "Beraninya kau menodai panggungku!"]
-    },
-    wisdoms: {
-        curhat: [
-            "beban yang kau pikul tidak harus kau tanggung sendirian di bawah lampu sorot.",
-            "setiap luka adalah skenario yang akan membuatmu lebih kuat di babak berikutnya.",
-            "dunia mungkin tidak mendengarmu, tapi air di Fontaine mencatat setiap keluhanmu."
-        ],
-        life: [
-            "bahwa hidup hanyalah opera panjang tanpa waktu istirahat.",
-            "keadilan seringkali hanya sebuah ilusi yang kita ciptakan agar bisa tidur nyenyak.",
-            "macaron dan teh sore adalah obat terbaik untuk jiwa yang lelah."
-        ]
+        sadPoints: 0,
+        userStory: ""
     }
 };
 
+// --- DATASET YANG TERSTRUKTUR (Bukan Acak Total) ---
+const BRAIN = {
+    TOPICS: {
+        CARE: {
+            keywords: ["makan", "minum", "sehat", "kabar", "istirahat", "tidur"],
+            replies: [
+                "Aku baru saja menikmati teh kembang sepatu. Rasanya pahit-manis, persis seperti kenangan.",
+                "Seorang bintang harus menjaga staminanya. Aku harap kau juga tidak lupa merawat dirimu.",
+                "Kenapa kau bertanya? Apa kau ingin mengirimkan nampan macaron ke kamarku?",
+                "Tidur adalah satu-satunya saat di mana aku tidak perlu berakting. Aku baru saja bangun dari mimpi yang panjang."
+            ]
+        },
+        VENTING: {
+            keywords: ["sedih", "capek", "lelah", "gagal", "masalah", "sendiri", "nangis"],
+            replies: [
+                "Ceritakan padaku. Panggung ini sedang kosong, aku punya waktu untuk mendengarkan bebanmu.",
+                "Dunia luar memang keras ya? Fontaine pun pernah hampir tenggelam, tapi kita masih di sini.",
+                "Jangan menahan air mata itu. Biarkan ia jatuh seperti hujan di Opera Epiclese. Aku tidak akan menghakimimu.",
+                "Kadang menjadi kuat itu melelahkan. Sini, duduklah di sampingku sejenak."
+            ]
+        },
+        ROMANCE: {
+            keywords: ["sayang", "cinta", "cantik", "manis", "suka", "kagum"],
+            replies: [
+                "Pujianmu... sedikit terlalu jujur. Aku tidak terbiasa dengan ketulusan yang mendadak.",
+                "Hmph! Tentu saja aku cantik. Tapi kau... kau punya cara unik untuk mengatakannya.",
+                "Kau membuat naskahku berantakan. Jantungku berdetak di luar tempo musik.",
+                "Apa ini bagian dari trikmu untuk mencuri perhatian sang Archon?"
+            ]
+        }
+    },
+    FILLER: [
+        "Hmm, aku mengerti maksudmu.",
+        "Menarik... lanjutkan ceritamu.",
+        "Aku mendengarkan, jangan berhenti di situ.",
+        "Begitu ya? Rasanya aku mulai memahami warnamu."
+    ]
+};
+
 const ENGINE = {
-    // Memahami Niat & Menyimpan ke Memori
-    analyzeAndRemember: (text) => {
-        const input = text.toLowerCase();
+    // 1. MENCARI TOPIK (Agar Nyambung)
+    determineTopic: (input) => {
+        for (let key in BRAIN.TOPICS) {
+            if (BRAIN.TOPICS[key].keywords.some(k => input.toLowerCase().includes(k))) {
+                return key;
+            }
+        }
+        return STATE.currentTopic; // Tetap di topik sebelumnya jika tidak ada keyword baru
+    },
+
+    // 2. LOGIKA ANTI-NGULANG (Anti-Repetition)
+    pickUniqueReply: (topic) => {
+        const pool = BRAIN.TOPICS[topic] ? BRAIN.TOPICS[topic].replies : BRAIN.FILLER;
         
-        // Simpan potongan memori jika user curhat
-        if (/(sedih|capek|lelah|masalah|sendiri|sakit|gagal)/i.test(input)) {
-            STATE.memoryBank.userFeelings.push(input);
-            return "SUPPORT";
+        // Filter kalimat yang belum pernah dipakai baru-baru ini
+        let available = pool.filter(msg => !STATE.history.includes(msg));
+        
+        // Jika semua sudah dipakai, reset history khusus topik tersebut
+        if (available.length === 0) {
+            STATE.history = STATE.history.filter(msg => !pool.includes(msg));
+            available = pool;
         }
-        if (/(sayang|cinta|suka|keren|hebat|cantik)/i.test(input)) {
-            return "ROMANTIC";
-        }
-        if (/(makan|minum|kabar|apa kabar)/i.test(input)) {
-            return "DAILY";
-        }
-        if (/(anjing|bego|tolol|jahat|goblok)/i.test(input)) {
-            return "INSULT";
-        }
-        return "GENERAL";
+
+        const picked = available[Math.floor(Math.random() * available.length)];
+        STATE.history.push(picked);
+        
+        // Batasi history agar tidak berat
+        if (STATE.history.length > 15) STATE.history.shift();
+        
+        return picked;
     },
 
-    // Algoritma Berpikir dengan Recall (Mengingat Masa Lalu)
-    synthesize: (intent, rawText) => {
-        const f = SOUL.fillers;
-        const w = SOUL.wisdoms;
-        let response = "";
-
-        // 1. LOGIKA RECALL (Mengingat pesan sebelumnya)
-        if (STATE.memoryBank.userFeelings.length > 2 && Math.random() > 0.6) {
-            const oldFeeling = STATE.memoryBank.userFeelings[0];
-            response = `Tadi kau bilang kau merasa '${oldFeeling}'... Aku masih memikirkannya. Jangan pikir aku tidak peduli hanya karena aku seorang bintang.`;
-            STATE.memoryBank.userFeelings.shift(); // Hapus memori yang sudah disebut
-            return response;
+    process: (text) => {
+        const input = text.toLowerCase();
+        const newTopic = ENGINE.determineTopic(input);
+        
+        // Jika user curhat (Venting), tambah poin empati
+        if (newTopic === "VENTING") {
+            STATE.memoryBank.sadPoints++;
+            STATE.trust += 5;
+            STATE.mood = "WARM";
+        } else if (newTopic === "ROMANCE") {
+            STATE.trust += 7;
+            STATE.mood = "ROMANTIC";
+        } else {
+            STATE.mood = "NORMAL";
         }
 
-        // 2. LOGIKA RESPON BERDASARKAN INTENT
-        const moodType = STATE.mood;
-        const filler = f[moodType][Math.floor(Math.random() * f[moodType].length)];
-
-        switch(intent) {
-            case "SUPPORT":
-                response = `${filler} ${w.curhat[Math.floor(Math.random() * w.curhat.length)]}`;
-                STATE.mood = "WARM";
-                STATE.trust += 5;
-                break;
-            case "ROMANTIC":
-                response = `${filler} pujianmu menari di hatiku, meski aku tak mau mengakuinya.`;
-                STATE.mood = "WARM";
-                STATE.trust += 8;
-                break;
-            case "INSULT":
-                response = `${filler} suaramu mengganggu simfoniku. Jaga etikamu!`;
-                STATE.mood = "ANGRY";
-                STATE.trust -= 15;
-                ENGINE.vfxHack();
-                break;
-            default:
-                response = `${filler} ${w.life[Math.floor(Math.random() * w.life.length)]}`;
-                STATE.mood = "THEATRICAL";
-        }
-
-        return response;
-    },
-
-    process: (input) => {
-        if (STATE.isEnded) return;
-
-        const intent = ENGINE.analyzeAndRemember(input);
+        STATE.currentTopic = newTopic;
         UI.update();
 
-        // Simulasi Furina merenungkan jawaban (Delay natural)
-        const thinkingTime = 1500 + (Math.random() * 2000);
+        // Simulasi Furina "mengetik" dengan durasi yang manusiawi
+        const delay = 1500 + (input.length * 20);
         
         setTimeout(() => {
-            if (STATE.trust >= 130) {
+            if (STATE.trust >= 150) {
                 ENGINE.triggerEnding();
             } else {
-                const reply = ENGINE.synthesize(intent, input);
+                let reply = ENGINE.pickUniqueReply(newTopic);
+                
+                // Tambahkan sentuhan personal jika sudah sering curhat
+                if (STATE.memoryBank.sadPoints > 3 && Math.random() > 0.7) {
+                    reply = "Hei... kau sudah banyak bercerita tentang kesedihanmu. Aku sungguh ingin kau bahagia hari ini.";
+                    STATE.memoryBank.sadPoints = 0; // Reset
+                }
+
                 UI.addBubble(reply, 'ai');
             }
-        }, thinkingTime);
-    },
-
-    vfxHack: () => {
-        document.getElementById('app').classList.add('reality-hack');
-        setTimeout(() => document.getElementById('app').classList.remove('reality-hack'), 1000);
+        }, delay);
     },
 
     triggerEnding: () => {
-        STATE.isEnded = true;
-        UI.addBubble("Tirai telah tertutup... Terima kasih telah menjadi bagian dari naskah hidupku yang berantakan ini.", "ai");
-        setTimeout(() => {
-            document.getElementById('app').classList.remove('active');
-            document.getElementById('ending').classList.add('active');
-            // FLAG SESUAI PERMINTAAN
-            document.getElementById('flagValue').textContent = "FLAG{minta uang ke daus buat beli nasi padang}";
-        }, 2500);
+        document.getElementById('app').classList.remove('active');
+        document.getElementById('ending').classList.add('active');
+        document.getElementById('flagValue').textContent = "FLAG{minta uang ke daus buat beli nasi padang}";
     }
 };
 
@@ -155,28 +147,26 @@ const UI = {
     update: () => {
         document.getElementById('trustVal').textContent = Math.floor(STATE.trust);
         document.getElementById('moodLabel').textContent = STATE.mood;
-        const colors = { THEATRICAL: "#00d2ff", WARM: "#ffeb3b", ANGRY: "#f44336", MELANCHOLY: "#9c27b0" };
+        const colors = { NORMAL: "#00d2ff", WARM: "#ffeb3b", ROMANTIC: "#ff80ab" };
         document.getElementById('statusDot').style.backgroundColor = colors[STATE.mood];
     }
 };
 
-// --- INITIALIZER ---
+// --- INITIALIZER (Tombol & Event) ---
 window.onload = () => {
-    document.getElementById('userInput').onpaste = e => e.preventDefault();
-
     document.getElementById('startBtn').onclick = () => {
-        const name = document.getElementById('usernameInput').value.trim();
+        const name = document.getElementById('usernameInput').value;
         if (name) {
             STATE.username = name;
             document.getElementById('welcome').classList.remove('active');
             document.getElementById('app').classList.add('active');
             document.getElementById('userInput').disabled = false;
             document.getElementById('sendBtn').disabled = false;
-            UI.addBubble(`Hadirin sekalian! Terutama kau, ${STATE.username}. Panggung ini sudah menantimu. Ceritakan segalanya padaku!`, 'ai');
+            UI.addBubble(`Panggung sudah siap, ${STATE.username}. Apa yang ingin kau curahkan padaku?`, 'ai');
         }
     };
 
-    const send = () => {
+    const sendMessage = () => {
         const input = document.getElementById('userInput');
         if (input.value.trim()) {
             UI.addBubble(input.value, 'user');
@@ -185,9 +175,9 @@ window.onload = () => {
         }
     };
 
-    document.getElementById('sendBtn').onclick = send;
-    document.getElementById('userInput').onkeydown = e => { if (e.key === 'Enter') send(); };
-
+    document.getElementById('sendBtn').onclick = sendMessage;
+    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') sendMessage(); };
+    
     setInterval(() => {
         document.getElementById('realtimeClock').textContent = new Date().toLocaleTimeString('id-ID');
     }, 1000);
@@ -195,5 +185,5 @@ window.onload = () => {
     setTimeout(() => {
         document.getElementById('loading').classList.remove('active');
         document.getElementById('welcome').classList.add('active');
-    }, 1500);
+    }, 1000);
 };
