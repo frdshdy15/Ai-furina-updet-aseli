@@ -1,91 +1,245 @@
+/* =========================
+   RESET & BASE
+   ========================= */
 *{
+  margin:0;
+  padding:0;
   box-sizing:border-box;
-  font-family:system-ui,Segoe UI,Roboto;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
 }
 
 body{
-  margin:0;
-  background:linear-gradient(160deg,#0a0f1f,#141b33);
-  color:#eaeaff;
+  background:linear-gradient(180deg,#0e0f14,#141625);
+  color:#e8e9f0;
   height:100vh;
+  overflow:hidden;
+}
+
+/* =========================
+   SCREEN HANDLER
+   ========================= */
+.screen{
+  position:absolute;
+  inset:0;
+  display:none;
+}
+
+.screen.active{
   display:flex;
+}
+
+/* =========================
+   WELCOME
+   ========================= */
+#welcome{
+  align-items:center;
   justify-content:center;
-  align-items:center;
+  background:radial-gradient(circle at top,#1a1d3a,#0b0c16);
+  animation:fadeIn 1.2s ease;
 }
 
-#app{
-  width:100%;
-  max-width:480px;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
+.welcome-box{
+  width:90%;
+  max-width:360px;
+  background:rgba(20,22,45,.85);
+  border-radius:18px;
+  padding:28px;
+  text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.45);
+  animation:float 6s ease-in-out infinite;
 }
 
-header{
-  padding:14px;
-  background:rgba(0,0,0,.35);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid rgba(255,255,255,.1);
+.welcome-box h1{
+  font-size:2.4rem;
+  margin-bottom:4px;
 }
 
 .subtitle{
-  font-size:12px;
+  font-size:.9rem;
   opacity:.7;
+  margin-bottom:18px;
+}
+
+#welcome input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:#0f1125;
+  color:#fff;
+  margin-bottom:14px;
+  text-align:center;
+}
+
+#welcome button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#4c6fff;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
+}
+
+#welcome button:hover{
+  background:#5a7cff;
+}
+
+.hint{
+  font-size:.75rem;
+  opacity:.6;
+  margin-top:12px;
+}
+
+/* =========================
+   APP LAYOUT
+   ========================= */
+#app{
+  flex-direction:column;
+  height:100%;
+  animation:fadeIn .8s ease;
+}
+
+/* ===== HEADER ===== */
+header{
+  padding:14px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(20,22,45,.85);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+header h2{
+  font-size:1.2rem;
 }
 
 .info{
+  font-size:.8rem;
+  opacity:.8;
   text-align:right;
-  font-size:12px;
 }
 
+/* ===== CHAT ===== */
 #chat{
   flex:1;
-  padding:12px;
+  padding:16px;
   overflow-y:auto;
+  scroll-behavior:smooth;
 }
 
 .msg{
   max-width:80%;
+  padding:10px 14px;
+  border-radius:14px;
   margin-bottom:10px;
-  padding:10px 12px;
-  border-radius:12px;
-  font-size:14px;
   line-height:1.4;
+  animation:slideUp .25s ease;
+  white-space:pre-line;
 }
 
-.ai{
-  background:rgba(255,255,255,.08);
-  align-self:flex-start;
-}
-
-.user{
+.msg.user{
   background:#4c6fff;
-  align-self:flex-end;
-  color:white;
+  margin-left:auto;
+  border-bottom-right-radius:4px;
 }
 
+.msg.ai{
+  background:#1e213f;
+  margin-right:auto;
+  border-bottom-left-radius:4px;
+}
+
+/* ===== INPUT ===== */
 footer{
   display:flex;
-  padding:10px;
-  gap:8px;
-  border-top:1px solid rgba(255,255,255,.1);
+  padding:12px;
+  gap:10px;
+  background:rgba(20,22,45,.9);
 }
 
 footer input{
   flex:1;
-  padding:10px;
+  padding:12px;
   border-radius:10px;
   border:none;
   outline:none;
+  background:#0f1125;
+  color:#fff;
 }
 
 footer button{
-  padding:10px 14px;
+  padding:12px 18px;
   border:none;
   border-radius:10px;
-  background:#6c8cff;
-  color:white;
-  font-weight:600;
+  background:#4c6fff;
+  color:#fff;
+  cursor:pointer;
+}
+
+footer button:disabled,
+footer input:disabled{
+  opacity:.4;
+}
+
+/* =========================
+   CELEBRATION
+   ========================= */
+#celebration{
+  position:absolute;
+  inset:0;
+  background:rgba(10,10,30,.85);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9;
+}
+
+.hidden{
+  display:none;
+}
+
+.celebrate-box{
+  background:#1a1d3a;
+  padding:30px;
+  border-radius:18px;
+  text-align:center;
+  animation:pop .6s ease;
+}
+
+.hearts{
+  margin-top:12px;
+  font-size:1.4rem;
+  animation:pulse 1.4s infinite;
+}
+
+/* =========================
+   ANIMATIONS
+   ========================= */
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+@keyframes slideUp{
+  from{transform:translateY(10px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+@keyframes pop{
+  0%{transform:scale(.8);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.15)}
+}
+
+@keyframes float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
 }
