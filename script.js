@@ -2,16 +2,15 @@
 
 /* =====================================================
    FURINA — TRIAL OF TRUST
-   FINAL FIX ENGINE (NO BUG, NO LOOP)
-   Dataset: EMPTY (READY TO PASTE)
+   FINAL STABLE ENGINE
    by Firdaus Hidayatullah
 ===================================================== */
+
+const $ = id => document.getElementById(id);
 
 /* =========================
    DOM
 ========================= */
-const $ = id => document.getElementById(id);
-
 const screen = {
   loading: $("loading"),
   welcome: $("welcome"),
@@ -73,8 +72,12 @@ function updateHUD() {
   scoreEl.textContent = GAME.stat.score;
 }
 
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 /* =========================
-   LOADING (ANTI STUCK)
+   LOADING
 ========================= */
 window.onload = () => {
   show(screen.loading);
@@ -104,28 +107,26 @@ startBtn.onclick = () => {
 function intro() {
   addMsg("…", "ai");
   setTimeout(() => addMsg(`Kamu ${GAME.user.name}.`, "ai"), 700);
-  setTimeout(() => addMsg("Aku menilai dari caramu bicara.", "ai"), 1400);
-  setTimeout(() => addMsg("Bukan dari cepatnya kamu ngetik.", "ai"), 2100);
+  setTimeout(() => addMsg("Aku menilai sikap, bukan kecepatan.", "ai"), 1400);
+  setTimeout(() => addMsg("Silakan.", "ai"), 2100);
 }
 
 /* =========================
-   ANTI CURANG (BASIC)
+   ANTI CHEAT (HALUS)
 ========================= */
 function antiCheat(text) {
   const now = Date.now();
   const delta = now - GAME.user.lastSend;
   GAME.user.lastSend = now;
 
-  // spam cepat
-  if (delta < 600) {
-    GAME.stat.trust -= 2;
-    GAME.stat.patience -= 6;
+  if (delta < 500) {
+    GAME.stat.trust -= 1;
+    GAME.stat.patience -= 2;
   }
 
-  // nyebut sistem
-  if (/flag|ending|trust|score|\{|\}/i.test(text)) {
-    GAME.stat.trust -= 8;
-    GAME.stat.patience -= 10;
+  if (/flag|ending|source|kode|\{|\}/i.test(text)) {
+    GAME.stat.trust -= 6;
+    GAME.stat.patience -= 5;
   }
 }
 
@@ -134,16 +135,16 @@ function antiCheat(text) {
 ========================= */
 function analyze(text) {
   if (/(anj|kont|tolol|bodoh|fuck|shit)/i.test(text)) {
-    GAME.stat.trust -= 10;
+    GAME.stat.trust -= 12;
     GAME.stat.patience -= 15;
   }
 
   if (/(maaf|sorry|tolong|terima kasih|thanks)/i.test(text)) {
-    GAME.stat.trust += 5;
+    GAME.stat.trust += 6;
   }
 
-  if (text.length < 2) {
-    GAME.stat.trust -= 1;
+  if (text.length > 8) {
+    GAME.stat.trust += 1;
   }
 
   GAME.stat.trust = clamp(GAME.stat.trust, -100, 100);
@@ -151,40 +152,43 @@ function analyze(text) {
 }
 
 /* =========================
-   RESPONSE (SIMPLE & STABLE)
+   RESPONSE (DATASET BASED)
 ========================= */
 function respond() {
-  let r = "…";
+  let response;
 
   if (GAME.stat.patience <= 0) {
-    r = "Aku berhenti. Kamu nggak serius.";
+    response = "Cukup. Aku selesai.";
   }
   else if (GAME.stat.trust < -30) {
-    r = "Nada kamu bikin aku menutup diri.";
+    response = pick(FURINA_DATASET.emotion.abyss);
   }
   else if (GAME.stat.trust < 0) {
-    r = "Hati-hati ngomong.";
+    response = pick(FURINA_DATASET.emotion.cold);
   }
   else if (GAME.stat.trust < 25) {
-    r = "Lanjut.";
+    response = pick(FURINA_DATASET.emotion.neutral);
   }
   else if (GAME.stat.trust < 60) {
-    r = "Kamu konsisten.";
+    response = pick(FURINA_DATASET.emotion.warm);
+  }
+  else if (GAME.stat.trust < 80) {
+    response = pick(FURINA_DATASET.emotion.trust);
   }
   else {
-    r = "Aku mulai percaya kamu.";
+    response = pick(FURINA_DATASET.final);
   }
 
-  addMsg(r, "ai");
+  addMsg(response, "ai");
 }
 
 /* =========================
-   ENDING CHECK (FIX)
+   ENDING CHECK
 ========================= */
 function checkEnding() {
   if (
-    GAME.stat.trust >= 80 &&
-    GAME.stat.patience >= 40 &&
+    GAME.stat.trust >= 85 &&
+    GAME.stat.patience >= 30 &&
     !GAME.system.ended
   ) {
     endGame();
@@ -196,15 +200,14 @@ function checkEnding() {
 ========================= */
 function endGame() {
   GAME.system.ended = true;
-
   setTimeout(() => {
     show(screen.ending);
     flagEl.textContent = "FLAG{TRUST_IS_EARNED}";
-  }, 1000);
+  }, 1200);
 }
 
 /* =========================
-   SEND (ONE WAY, SAFE)
+   SEND
 ========================= */
 function send() {
   if (GAME.system.ended) return;
@@ -224,17 +227,16 @@ function send() {
   setTimeout(() => {
     respond();
     checkEnding();
-  }, 500);
+  }, 450);
 }
 
 sendBtn.onclick = send;
 userInput.onkeydown = e => e.key === "Enter" && send();
 
 /* =========================
-   DATASET PLACEHOLDER
-   (PASTE YOUR GOD DATASET HERE)
+   DATASET
+   (BOLEH KAMU GANTI / TAMBAH)
 ========================= */
-
 const FURINA_DATASET = {
 
   /* =====================================================
