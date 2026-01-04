@@ -1,19 +1,45 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Furina Trust Challenge</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Furina Trust Challenge</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="app">
+<!-- ================= WELCOME SCREEN ================= -->
+<div id="welcome" class="screen active">
+  <div class="welcome-box">
+    <h1>Furina</h1>
+    <p class="subtitle">Dingin · Selektif · Menguji Kepercayaan</p>
 
+    <input
+      id="nameInput"
+      type="text"
+      placeholder="Masukkan namamu…"
+      autocomplete="off"
+    >
+
+    <button id="startBtn">Masuk</button>
+
+    <p class="hint">
+      Tidak semua kata akan disukai.<br>
+      Skor 100 berarti kepercayaan.
+    </p>
+  </div>
+</div>
+
+<!-- ================= MAIN APP ================= -->
+<div id="app" class="screen">
+
+  <!-- ===== HEADER ===== -->
   <header>
     <div>
-      <h1>Furina</h1>
-      <p class="subtitle">Dingin · Selektif · Menguji</p>
+      <h2 id="furinaName">Furina</h2>
+      <p class="subtitle">Dingin · Selektif</p>
     </div>
     <div class="info">
       <span id="clock">00:00</span>
@@ -21,15 +47,34 @@
     </div>
   </header>
 
+  <!-- ===== CHAT ===== -->
   <main id="chat"></main>
 
+  <!-- ===== INPUT ===== -->
   <footer>
-    <input id="input" placeholder="Ketik dengan tenang…" autocomplete="off">
-    <button id="send">Kirim</button>
+    <input
+      id="input"
+      placeholder="Ketik dengan tenang…"
+      autocomplete="off"
+      disabled
+    >
+    <button id="send" disabled>Kirim</button>
   </footer>
 
 </div>
 
+<!-- ================= FLAG CELEBRATION ================= -->
+<div id="celebration" class="hidden">
+  <div class="celebrate-box">
+    <h1>🎉 Selamat 🎉</h1>
+    <p>Kamu berhasil mendapatkan kepercayaan Furina</p>
+    <div class="hearts">
+      ❤️ 💙 💜 💖 💗
+    </div>
+  </div>
+</div>
+
+<!-- JS -->
 <script src="script.js"></script>
 </body>
 </html>
