@@ -2,116 +2,97 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Furina — Trial of Trust</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- CSS akan dimuat terpisah -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- =========================
-       LOADING / OPENING
-  ========================== -->
   <div id="loading" class="screen active">
     <div class="loading-box">
       <div class="loading-title">FURINA</div>
-      <div class="loading-sub">Trial of Trust</div>
+      <div class="loading-sub">System Initialization</div>
       <div class="loading-bar">
         <div class="loading-fill"></div>
       </div>
-      <div class="loading-text">Memulai simulasi…</div>
-      <div class="loading-credit">by Firdaus Hidayatullah</div>
+      <div class="loading-text">Memuat protokol psikologi…</div>
     </div>
   </div>
 
-  <!-- =========================
-       WELCOME / START
-  ========================== -->
   <div id="welcome" class="screen">
     <div class="welcome-box">
       <div class="title">FURINA</div>
-      <div class="subtitle">Trial of Trust</div>
-
-      <input
-        id="usernameInput"
-        type="text"
-        placeholder="Nama kamu"
-        autocomplete="off"
+      <div class="subtitle">Trial of Trust v2.0</div>
+      
+      <input 
+        id="usernameInput" 
+        type="text" 
+        placeholder="Siapa namamu?" 
+        autocomplete="off" 
+        maxlength="12"
       >
 
-      <button id="startBtn">START</button>
+      <button id="startBtn">MULAI SIMULASI</button>
 
       <div class="hint">
-        Ini bukan permainan cepat.<br>
-        Cara bicaramu diperhatikan.
-      </div>
-
-      <div class="credit">
-        by Firdaus Hidayatullah
+        <p>Furina merespon waktu dan kesabaran.</p>
+        <p>Jangan biarkan dia menunggu terlalu lama.</p>
       </div>
     </div>
   </div>
 
-  <!-- =========================
-       MAIN APP / CHAT
-  ========================== -->
   <div id="app" class="screen">
     <header>
-      <h2>Furina</h2>
+      <div class="header-left">
+        <h2>Furina</h2>
+        <div id="statusDot" class="status online"></div>
+      </div>
+      
       <div class="header-right">
-        <div class="score">Score: <b id="score">0</b></div>
-        <div class="trust">Trust: <span id="trust">0</span></div>
+        <div id="realtimeClock">00:00</div>
+        <div class="stats">
+          <span class="stat-box">Trust: <b id="trustVal">0</b>%</span>
+        </div>
       </div>
     </header>
 
-    <!-- CHAT AREA -->
     <div id="chat"></div>
 
-    <!-- INPUT AREA -->
     <footer>
-      <input
-        id="userInput"
-        type="text"
-        placeholder="Ketik sesuatu…"
-        autocomplete="off"
+      <input 
+        id="userInput" 
+        type="text" 
+        placeholder="Ketik pesan..." 
+        autocomplete="off" 
         disabled
       >
-      <button id="sendBtn" disabled>Kirim</button>
+      <button id="sendBtn" disabled>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+        </svg>
+      </button>
     </footer>
   </div>
 
-  <!-- =========================
-       FLAG / FINAL ENDING
-  ========================== -->
   <div id="ending" class="screen">
     <div class="ending-box">
-      <h2>Baik.</h2>
-      <p>
-        Kamu sampai sejauh ini.<br>
-        Tidak semua orang bisa.
-      </p>
-
-      <div class="flag-box">
-        <div class="flag-label">FLAG</div>
-        <div id="flagValue">FLAG{••••••••••}</div>
+      <h2>AKSES DIBERIKAN</h2>
+      <p>Kamu membuktikan konsistensi.<br>Di luar ekspektasi.</p>
+      
+      <div class="flag-container">
+        <span class="flag-label">SECRET FLAG:</span>
+        <code id="flagValue">LOADING...</code>
       </div>
 
       <p class="ending-note">
-        Jangan dibagikan.<br>
-        Yang pantas akan tahu apa artinya.
+        Screenshot ini sebagai bukti.<br>
+        — Furina
       </p>
-
-      <div class="ending-credit">
-        — Furina<br>
-        <span>by Firdaus Hidayatullah</span>
-      </div>
+      
+      <button onclick="location.reload()" class="btn-restart">Ulangi Sistem</button>
     </div>
   </div>
 
-  <!-- =========================
-       JS (NANTI)
-  ========================== -->
   <script src="script.js"></script>
 </body>
 </html>
