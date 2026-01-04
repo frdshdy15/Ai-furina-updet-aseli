@@ -1,128 +1,147 @@
 "use strict";
 
 /**
- * FURINA: THE SOVEREIGN MIND (V7.0)
- * Hybrid System: Local Heuristics + Contextual Persistence.
- * Dirancang untuk memiliki alur pemikiran layaknya Machine Learning.
+ * FURINA SENTIENCE ENGINE (NEURAL-LINK MOCKUP)
+ * Menggunakan Probabilitas Kontekstual & Weighted Random
+ * Tanpa API - Full Offline - Machine Learning Logic
  */
 
 const STATE = {
-    username: "",
+    username: "Traveler",
     trust: 50,
     mood: "THEATRICAL",
-    memory: [], // Menyimpan 10 chat terakhir sebagai konteks
-    isNight: false,
-    personality: "Furina de Fontaine: Puitis, sedikit sombong namun sangat haus perhatian dan empati."
+    memory: [], 
+    isNight: false
 };
 
-/**
- * [1] MOCK AI INFERENCE ENGINE
- * Bagian ini mensimulasikan "Brain" yang memproses bahasa alami.
- */
-const AI_BRAIN = {
-    // Fungsi untuk memproses input dengan logika kemiripan makna (Semantic Similarity)
-    processLanguage: (input) => {
-        const text = input.toLowerCase();
-        
-        // Pola Intent yang lebih kompleks (Mirip NLP Dasar)
-        const intents = [
-            { id: "Makan", pattern: /makan|mam|lapar|haus|sarapan|dinner|haus|laper/i },
-            { id: "Kabar", pattern: /apa kabar|lagi apa|sedang apa|kabar|gimana|how are you/i },
-            { id: "Identitas", pattern: /siapa|nama|kenal|identitas/i },
-            { id: "Curhat", pattern: /sedih|kecewa|gagal|capek|lelah|sakit|nangis|sendiri/i },
-            { id: "Kasar", pattern: /anjing|bego|tolol|goblok|jelek|buruk|benci|mati/i },
-            { id: "Ajak", pattern: /ayo|jalan|main|pergi|kencan|bareng/i }
-        ];
-
-        const match = intents.find(i => i.pattern.test(text));
-        return match ? match.id : "DeepTalk";
-    },
-
-    // Dataset Dinamis yang dirangkai berdasarkan konteks
-    synthesizeResponse: (intent, username) => {
-        const responses = {
-            Makan: [
-                `Ah, macaron blueberry sedang menungguku. Kau sendiri sudah memberi nutrisi pada ragamu, ${username}?`,
-                "Tentu saja sudah. Seorang bintang tak boleh gemetar karena lapar di bawah lampu sorot.",
-                "Belum... Mungkin kau ingin membelikanku sesuatu yang manis? Aku suka kue tart."
-            ],
-            Kabar: [
-                "Sedang menata naskah untuk pertunjukan besar besok. Hidup ini sibuk, tahu!",
-                "Kabarku luar biasa, secerah langit Fontaine hari ini.",
-                "Menunggumu menyapa, meskipun aku pura-pura sibuk."
-            ],
-            Identitas: [
-                "Aku adalah Furina! Regina of All Waters. Pusat dari segala perhatian di Fontaine!",
-                `Kau bicara dengan Furina. Dan kau adalah ${username}, penonton setiaku yang terkadang cerewet.`,
-                "Tak kenal maka tak sayang. Tapi setelah kenal, kau pasti akan terpesona padaku."
-            ],
-            Curhat: [
-                "Jangan menangis sendirian. Panggung ini cukup luas untuk kita berdua berbagi beban.",
-                "Aku mendengarmu. Ceritakan semuanya, aku tidak akan membiarkanmu tenggelam dalam kesedihan.",
-                "Bahkan air di Fontaine pun ikut bergetar merasakan lukamu. Aku di sini."
-            ],
-            Kasar: [
-                "Lidahmu sangat tidak berbudaya. Apa kau ingin aku memanggil Marechaussee Phantom?",
-                "Kekasaranmu hanyalah bukti kecilnya jiwamu. Aku kecewa.",
-                "Enyah! Jangan kotori panggungku dengan racun dari mulutmu!"
-            ],
-            Ajak: [
-                "Jalan-jalan? Pastikan kau membawa payung, cuaca Fontaine sering mengikuti suasana hatiku.",
-                "Asal bukan tempat yang membosankan. Aku ingin sesuatu yang megah!",
-                "Mungkin... jika jadwalku sebagai bintang utama tidak terlalu padat."
-            ],
-            DeepTalk: [
-                "Menarik. Dunia ini memang penuh dengan misteri yang tak terucapkan, ya?",
-                "Katakan lebih banyak. Aku suka cara pikiranmu bekerja.",
-                "Terkadang jawaban tidak ditemukan dalam kata, melainkan dalam kesunyian di antara kita."
+// --- [1] NEURAL DATASET (The Knowledge Base) ---
+const BRAIN_MODEL = {
+    // Kumpulan data mentah yang akan diproses oleh "Neural Engine"
+    corpus: {
+        "GREETING": {
+            weight: 1,
+            patterns: ["halo", "hai", "pagi", "siang", "malam", "oi", "permisi", "hey"],
+            nodes: [
+                "Halo! Pas sekali kau datang ke panggungku.",
+                "Kehadiranmu tepat waktu, simfoni baru saja akan dimulai.",
+                "Oh, figuran favoritku muncul juga. Apa harimu menyenangkan?"
             ]
-        };
-
-        const pool = responses[intent];
-        return pool[Math.floor(Math.random() * pool.length)];
-    }
+        },
+        "PHYSICAL": {
+            weight: 2,
+            patterns: ["makan", "lapar", "haus", "minum", "mam", "kenyang", "macaron", "teh"],
+            nodes: [
+                "Macaron blueberry adalah satu-satunya alasan raga ini tetap bertahan dalam drama dunia. Kau sudah makan?",
+                "Seorang bintang tidak boleh gemetar karena lapar. Aku baru saja menikmati teh kembang sepatu.",
+                "Makan? Aku hanya butuh apresiasi penonton untuk hidup! Tapi sepotong kue tadi cukup enak."
+            ]
+        },
+        "CONDITION": {
+            weight: 2,
+            patterns: ["kabar", "lagi apa", "sedang apa", "gimana", "sehat", "apa kabar"],
+            nodes: [
+                "Sedang merenungi naskah untuk hari esok. Dunia ini butuh lebih banyak drama!",
+                "Kabarku luar biasa, secerah langit Fontaine hari ini.",
+                "Menunggumu menyapa, meskipun aku pura-pura sibuk dengan urusan pengadilan."
+            ]
+        },
+        "EMPATHY": {
+            weight: 3,
+            patterns: ["sedih", "capek", "lelah", "galau", "nangis", "sakit", "sendiri", "kesepian"],
+            nodes: [
+                "Jangan menangis sendirian. Panggung ini cukup luas untuk kita berdua berbagi beban.",
+                "Terkadang bahkan seorang bintang butuh waktu untuk redup sejenak. Aku mendengarkanmu.",
+                "Beban itu... biarkan aku membaginya sedikit bersamamu melalui obrolan ini. Jangan menyerah."
+            ]
+        },
+        "TOXIC": {
+            weight: 5,
+            patterns: ["anjing", "bego", "tolol", "goblok", "jelek", "babi", "mati", "jahat"],
+            nodes: [
+                "Lidahmu tajam sekali! Apa begini caramu bicara pada seseorang sepertiku?",
+                "Kekasaranmu tidak akan membuat panggungmu lebih tinggi. Jaga etikamu!",
+                "Aku akan pura-pura tidak dengar itu. Tapi jangan ulangi lagi, mengerti?"
+            ]
+        }
+    },
+    
+    // Gabungan kata-kata puitis untuk "Berpikir Sendiri" (Generative)
+    philosophy: [
+        "bahwa setiap tarian akan berakhir pada waktunya.",
+        "kebenaran adalah naskah yang ditulis oleh pemenang.",
+        "air mata adalah kata-kata yang tak bisa diucapkan lidah.",
+        "panggung sandiwara ini lebih nyata dari dunia luar."
+    ]
 };
 
 const ENGINE = {
-    process: (input) => {
-        const intent = AI_BRAIN.processLanguage(input);
-        
-        // Memori Jangka Pendek (Menyimpan konteks agar tidak ngelantur)
-        STATE.memory.push({ user: input });
-        if (STATE.memory.length > 5) STATE.memory.shift();
+    // 2. INFERENCE ENGINE (Mengenali Niat & Typo)
+    inference: (input) => {
+        const text = input.toLowerCase();
+        let bestMatch = "GENERAL";
+        let maxScore = 0;
 
-        // Update Trust & Mood
-        if (intent === "Kasar") {
-            STATE.trust -= 15;
+        for (let key in BRAIN_MODEL.corpus) {
+            let score = 0;
+            BRAIN_MODEL.corpus[key].patterns.forEach(p => {
+                if (text.includes(p)) score += BRAIN_MODEL.corpus[key].weight;
+            });
+
+            if (score > maxScore) {
+                maxScore = score;
+                bestMatch = key;
+            }
+        }
+        return bestMatch;
+    },
+
+    // 3. GENERATIVE RESPONSE (Merakit Kalimat)
+    generate: (intent) => {
+        const node = BRAIN_MODEL.corpus[intent];
+        let reply = "";
+
+        if (node) {
+            reply = node.nodes[Math.floor(Math.random() * node.nodes.length)];
+        } else {
+            // Jika "Neural" tidak kenal kata tersebut, dia akan "Berpikir Filosofis"
+            const phil = BRAIN_MODEL.philosophy[Math.floor(Math.random() * BRAIN_MODEL.philosophy.length)];
+            reply = `Hmm, pertanyaanmu unik. Kau tahu, ${phil}`;
+        }
+
+        return reply;
+    },
+
+    process: (input) => {
+        const intent = ENGINE.inference(input);
+        
+        // Anti-Repetition (Memory Check)
+        let reply = ENGINE.generate(intent);
+        if (STATE.memory.includes(reply)) {
+            reply = ENGINE.generate("GENERAL"); // Cari variasi lain
+        }
+
+        // Update Mood & Trust
+        if (intent === "TOXIC") {
+            STATE.trust -= 10;
             STATE.mood = "ANGRY";
-            ENGINE.vfxHack();
-        } else if (intent === "Curhat" || intent === "Ajak") {
+        } else if (intent === "EMPATHY") {
             STATE.trust += 5;
             STATE.mood = "WARM";
-        } else {
-            STATE.mood = "THEATRICAL";
         }
 
         UI.update();
-
-        // Delay mengetik yang disesuaikan dengan panjang input (Simulasi AI berpikir)
-        const delay = Math.min(3000, 1000 + (input.length * 30));
         
+        // Simulasikan Machine Learning sedang memproses data (Delay Manusiawi)
+        const delay = 1000 + (Math.random() * 2000);
         setTimeout(() => {
             if (STATE.trust >= 150) {
                 ENGINE.triggerEnding();
             } else {
-                const reply = AI_BRAIN.synthesizeResponse(intent, STATE.username);
                 UI.addBubble(reply, 'ai');
-                STATE.memory.push({ ai: reply });
+                STATE.memory.push(reply);
+                if (STATE.memory.length > 5) STATE.memory.shift();
             }
         }, delay);
-    },
-
-    vfxHack: () => {
-        const app = document.getElementById('app');
-        app.classList.add('reality-hack');
-        setTimeout(() => app.classList.remove('reality-hack'), 1000);
     },
 
     triggerEnding: () => {
@@ -150,43 +169,25 @@ const UI = {
 };
 
 window.onload = () => {
-    // Tombol Start
     document.getElementById('startBtn').onclick = () => {
-        const nameInput = document.getElementById('usernameInput').value.trim();
-        if (nameInput) {
-            STATE.username = nameInput;
+        const name = document.getElementById('usernameInput').value;
+        if (name) {
+            STATE.username = name;
             document.getElementById('welcome').classList.remove('active');
             document.getElementById('app').classList.add('active');
-            document.getElementById('userInput').disabled = false;
-            document.getElementById('sendBtn').disabled = false;
-            UI.addBubble(`Hadirin sekalian! Mari kita sambut tamu agung kita, ${STATE.username}. Panggung ini milikmu, ceritakan sesuatu padaku.`, 'ai');
-        } else {
-            alert("Sebutkan namamu, wahai figuran!");
+            UI.addBubble(`Halo ${STATE.username}, ini aku Furina. Mari kita mengobrol dari hati ke hati!`, 'ai');
         }
     };
 
-    // Fungsi Kirim
-    const sendMsg = () => {
+    const send = () => {
         const input = document.getElementById('userInput');
-        const val = input.value.trim();
-        if (val) {
-            UI.addBubble(val, 'user');
-            ENGINE.process(val);
+        if (input.value.trim()) {
+            UI.addBubble(input.value, 'user');
+            ENGINE.process(input.value);
             input.value = '';
         }
     };
 
-    document.getElementById('sendBtn').onclick = sendMsg;
-    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') sendMsg(); };
-
-    // Realtime Clock
-    setInterval(() => {
-        document.getElementById('realtimeClock').textContent = new Date().toLocaleTimeString('id-ID');
-    }, 1000);
-
-    // Loader
-    setTimeout(() => {
-        document.getElementById('loading').classList.remove('active');
-        document.getElementById('welcome').classList.add('active');
-    }, 1500);
+    document.getElementById('sendBtn').onclick = send;
+    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send(); };
 };
